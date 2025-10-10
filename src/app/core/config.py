@@ -1,3 +1,4 @@
+import logging
 import secrets
 import warnings
 from pathlib import Path
@@ -6,7 +7,7 @@ from typing import Self
 from pydantic import BaseModel, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.infrastructure.database.configs import PostgresDsnConfig
+from app.db.configs import PostgresDsnConfig
 
 
 class TokenConfig(BaseModel):
@@ -26,6 +27,8 @@ class Config(BaseSettings):
 
     PROJECT_NAME: str
     SECRET_KEY: str = ""
+    SECRET_KEY_ALGORITHM: str = "HS256"
+
     token: TokenConfig = TokenConfig()
     database: PostgresDsnConfig  # Preferred db configuration
 
@@ -40,9 +43,17 @@ class Config(BaseSettings):
             )
         return self
 
+    @model_validator(mode="after")
+    def _configure_logger(self) -> Self:
+        logging.basicConfig(level=logging.INFO)
+        return self
+
 
 def newConfig() -> Config:
     """
     Returns a new application configuration instance.
     """
     return Config()  # type: ignore
+
+
+config = newConfig()
