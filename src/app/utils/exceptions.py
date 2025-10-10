@@ -18,3 +18,8 @@ class PasswordVerificationError(BaseException):
 class InstantiationNotAllowedError(BaseException):
     def __init__(self, name: str) -> None:
         super().__init__(f"Cannot instantiate {name}")
+
+
+class ClientNotConnectedError(BaseException):
+    def __init__(self, id: str) -> None:
+        super().__init__(f"Websocket client with id={id} is not in the connection pool")
