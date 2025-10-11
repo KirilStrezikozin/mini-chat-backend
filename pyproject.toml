@@ -18,6 +18,8 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.43"}
 bcrypt = "^5.0.0"
 python-jose = "^3.5.0"
 websockets = "^15.0.1"
+asyncpg = "^0.30.0"
+greenlet = "^3.2.4"
 
 [build-system]
 requires = ["poetry-core"]
