@@ -1,0 +1,52 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    image: minichat-backend:latest-dev
+    container_name: minichat-backend-dev
+    volumes:
+      - ./src/app:/src/src/app
+      - ./alembic:/src/alembic
+      - ./alembic.ini:/src/alembic.ini:ro
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    labels:
+      caddy: minichat.localhost
+      caddy.reverse_proxy: /api/* "{{upstreams ${BACKEND_PORT}}}"
+
+  frontend:
+    build:
+      context: ../frontend
+    image: minichat-frontend:latest-dev
+    container_name: minichat-fronted-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ../frontend/src/:/app/src/
+      - ../frontend/public/:/app/public
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    labels:
+      caddy: minichat.localhost
+      caddy.reverse_proxy: "{{upstreams ${FRONTEND_PORT}}}"
+    networks:
+      - minichat-public
+
+  proxy:
+    image: lucaslorentz/caddy-docker-proxy:ci-alpine
+    container_name: minichat-proxy
+    ports:
+      - "80:80"
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - /var/run/docker.sock:/var/run/docker.sock
+      - caddy_data:/data
+    networks:
+      - minichat-public
+
+volumes:
+  caddy_data:
