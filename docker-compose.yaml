@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE__POSTGRES_USER} -d ${DATABASE__POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    ports:
+      - "${DATABASE__POSTGRES_PORT}:${DATABASE__POSTGRES_PORT}"
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${DATABASE__POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${DATABASE__POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${DATABASE__POSTGRES_DB?Variable not set}
+      - POSTGRES_PORT=${DATABASE__POSTGRES_PORT?Variable not set}
+    networks:
+      - minichat-public
+
+  backend:
+    build:
+      context: .
+    image: minichat-backend:latest
+    container_name: minichat-backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "${BACKEND_URL}/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - .env
+    environment:
+      - DATABASE__POSTGRES_SERVER=db
+    ports:
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
+    networks:
+      - minichat-public
+
+volumes:
+  db-data:
+networks:
+  minichat-public:
+
