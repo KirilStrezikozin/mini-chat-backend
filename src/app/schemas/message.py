@@ -1,22 +1,22 @@
 from datetime import datetime
 from typing import Annotated, Self
 
-from pydantic import BaseModel, StringConstraints, model_validator
+from pydantic import StringConstraints, model_validator
 
 from app.utils.types import IDType
 
-from . import IDSchema
+from . import Base, IDSchema
 
 
 class MessageIDSchema(IDSchema):
     pass
 
 
-class MessageContentSchema(BaseModel):
+class MessageContentSchema(Base):
     content: Annotated[str, StringConstraints(max_length=5000)]
 
 
-class MessageTimestampSchema(BaseModel):
+class MessageTimestampSchema(Base):
     timestamp: datetime
 
 
@@ -37,7 +37,7 @@ class MessageChangeContentSchema(MessageIDSchema, MessageContentSchema):
     pass
 
 
-class MessageFetchSchema(BaseModel):
+class MessageFetchSchema(Base):
     chat_id: IDType
     since: datetime | None = None
     until: datetime | None = None

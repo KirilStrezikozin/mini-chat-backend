@@ -1,8 +1,6 @@
-from pydantic import BaseModel
-
 from app.utils.types import IDType
 
-from . import IDSchema
+from . import Base, IDSchema
 
 
 class ChatIDSchema(IDSchema):
@@ -13,11 +11,11 @@ class ChatSchema(ChatIDSchema):
     pass
 
 
-class ChatUserSchema(BaseModel):
+class ChatUserSchema(Base):
     user_id: IDType
     chat_id: IDType
 
 
-class ChatRetrieveSchema(BaseModel):
+class ChatRetrieveSchema(Base):
     user_id: IDType
     with_user_id: IDType

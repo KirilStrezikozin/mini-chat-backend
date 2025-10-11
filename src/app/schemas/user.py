@@ -1,8 +1,8 @@
 from typing import Annotated, Self
 
-from pydantic import BaseModel, EmailStr, StringConstraints, model_validator
+from pydantic import EmailStr, StringConstraints, model_validator
 
-from . import IDSchema
+from . import Base, IDSchema
 
 UserNameAnnotation = Annotated[
     str, StringConstraints(max_length=50, min_length=2, pattern=r"^@")
@@ -13,11 +13,11 @@ class UserIDSchema(IDSchema):
     pass
 
 
-class UserFullNameSchema(BaseModel):
+class UserFullNameSchema(Base):
     fullname: Annotated[str, StringConstraints(max_length=50)]
 
 
-class UserUserNameSchema(BaseModel):
+class UserUserNameSchema(Base):
     username: UserNameAnnotation
 
 
@@ -37,7 +37,7 @@ class UserRegisterSchema(UserProfileSchema):
     password: str
 
 
-class UserLoginSchema:
+class UserLoginSchema(Base):
     username: UserNameAnnotation | None = None
     email: EmailStr | None = None
     password: str

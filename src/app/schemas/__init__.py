@@ -1,4 +1,5 @@
 __all__ = [
+    "Base",
     "IDSchema",
     "ChatIDSchema",
     "ChatRetrieveSchema",
@@ -14,6 +15,7 @@ __all__ = [
     "MessageTimestampSchema",
     "TokenPayload",
     "TokenSchema",
+    "TokenType",
     "AccessTokenSchema",
     "RefreshTokenSchema",
     "UserChangeFullNameSchema",
@@ -30,7 +32,7 @@ __all__ = [
     "UserUserNameSchema",
 ]
 
-from .base import IDSchema
+from .base import Base, IDSchema
 from .chat import ChatIDSchema, ChatRetrieveSchema, ChatSchema, ChatUserSchema
 from .message import (
     MessageChangeContentSchema,
@@ -42,7 +44,13 @@ from .message import (
     MessageReadSchema,
     MessageTimestampSchema,
 )
-from .token import AccessTokenSchema, RefreshTokenSchema, TokenPayload, TokenSchema
+from .token import (
+    AccessTokenSchema,
+    RefreshTokenSchema,
+    TokenPayload,
+    TokenSchema,
+    TokenType,
+)
 from .user import (
     UserChangeFullNameSchema,
     UserChangeUserNameSchema,

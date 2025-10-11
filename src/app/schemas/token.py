@@ -1,20 +1,23 @@
-from pydantic import BaseModel
+from enum import Enum
 
-from app.utils.types import TokenType
-
-from . import IDSchema
+from . import Base, IDSchema
 
 
-class AccessTokenSchema(BaseModel):
+class AccessTokenSchema(Base):
     access_token: str
 
 
-class RefreshTokenSchema(BaseModel):
+class RefreshTokenSchema(Base):
     refresh_token: str
 
 
 class TokenSchema(AccessTokenSchema, RefreshTokenSchema):
     pass
+
+
+class TokenType(str, Enum):
+    access_token = "access_token"
+    refresh_token = "refresh_token"
 
 
 class TokenPayload(IDSchema):
