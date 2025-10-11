@@ -2,8 +2,6 @@ from typing import Any
 
 from app.db.repositories import UserRepository
 from app.schemas import (
-    AccessTokenSchema,
-    RefreshTokenSchema,
     TokenSchema,
     UserCreateSchema,
     UserIDSchema,
@@ -19,28 +17,10 @@ from .exceptions import (
     UserEmailNotFoundError,
     UserNameAlreadyRegistered,
     UserNameNotFoundError,
-    UserNotFoundError,
 )
 
 
 class UserAuthService(BaseService):
-    async def token(self, *, accessScheme: AccessTokenSchema) -> None:
-        JWTManager.validate_token(self.config, accessScheme.access_token, "access")
-
-    async def refresh_token(self, *, refreshSchema: RefreshTokenSchema) -> TokenSchema:
-        payload = JWTManager.validate_token(
-            self.config, refreshSchema.refresh_token, "refresh"
-        )
-
-        idSchema = UserIDSchema(id=payload.id)
-
-        async with self.uow as uow:
-            user = await uow.userRepository.get(idSchema)
-            if not user:
-                raise UserNotFoundError
-
-        return JWTManager.create_token_schema(self.config, idSchema)
-
     async def login(self, *, loginSchema: UserLoginSchema) -> TokenSchema:
         async with self.uow as uow:
             model = UserRepository.model_cls
@@ -62,12 +42,13 @@ class UserAuthService(BaseService):
                 if not resource:
                     raise UserEmailNotFoundError
 
-        user = UserReadSchema.model_validate(resource)
+            user = UserReadSchema.model_validate(resource)
+
         PasswordManager.verify_password(loginSchema.password, user.password_hash)
 
         return JWTManager.create_token_schema(self.config, UserIDSchema(id=user.id))
 
-    async def register(self, registerSchema: UserRegisterSchema) -> TokenSchema:
+    async def register(self, *, registerSchema: UserRegisterSchema) -> TokenSchema:
         password_hash = PasswordManager.get_password_hash(registerSchema.password)
 
         userSchema = UserCreateSchema(
@@ -91,5 +72,6 @@ class UserAuthService(BaseService):
             resource = await uow.userRepository.add_one(userSchema)
             await uow.commit()
 
-        user = UserReadSchema.model_validate(resource)
+            user = UserReadSchema.model_validate(resource)
+
         return JWTManager.create_token_schema(self.config, UserIDSchema(id=user.id))
