@@ -1,6 +1,6 @@
-FROM python:3.12-slim AS build
+FROM python:3.12-slim
 
-WORKDIR /app
+WORKDIR /src
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -14,6 +14,6 @@ RUN $POETRY_VENV/bin/poetry config virtualenvs.create false \
 	&& $POETRY_VENV/bin/poetry install --no-interaction --no-root \
 	&& rm -rf $POETRY_VENV
 
-COPY src/app ./
+COPY src/app ./app/
 
-CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000", "main:app"]
+CMD ["uvicorn", "--host", "0.0.0.0", "--port", "8000", "app.main:app"]
