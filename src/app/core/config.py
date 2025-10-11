@@ -26,8 +26,19 @@ class Config(BaseSettings):
     )
 
     PROJECT_NAME: str
+    PREFIX_API_V1: str = "/api/v1"
     SECRET_KEY: str = ""
     SECRET_KEY_ALGORITHM: str = "HS256"
+
+    SITE_URL: str
+    ALLOW_ORIGINS: list[str]
+    USE_SECURE_COOKIES: bool = True
+
+    FRONTEND_PORT: int = 3000
+    BACKEND_PORT: int = 8000
+    BACKEND_HOST: str = "localhost"
+    BACKEND_URL: str = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     token: TokenConfig = TokenConfig()
     database: PostgresDsnConfig  # Preferred db configuration
