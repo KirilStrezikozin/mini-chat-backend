@@ -1,11 +1,12 @@
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 
 from app.api.deps import (
+    ChatServiceDependency,
+    UserIDDependency,
     UserProfileServiceDependency,
-    get_user_id,
 )
-from app.schemas import UserIDSchema
-from app.schemas.user import (
+from app.schemas import (
+    ChatInfoSchema,
     UserFullNameSchema,
     UserProfileSchema,
     UserUserNameSchema,
@@ -19,7 +20,7 @@ user_router = APIRouterWithRouteProtection(prefix="/user", tags=["user"])
 @user_router.get("", protected=True)
 async def user(
     service: UserProfileServiceDependency,
-    idSchema: UserIDSchema = Depends(get_user_id),  # noqa: B008
+    idSchema: UserIDDependency,
 ) -> UserProfileSchema:
     try:
         return await service.get_user(idSchema=idSchema)
@@ -31,7 +32,7 @@ async def user(
 async def edit_fullname(
     service: UserProfileServiceDependency,
     fullNameSchema: UserFullNameSchema,
-    idSchema: UserIDSchema = Depends(get_user_id),  # noqa: B008
+    idSchema: UserIDDependency,
 ) -> None:
     try:
         await service.edit_fullname(
@@ -45,7 +46,7 @@ async def edit_fullname(
 async def edit_username(
     service: UserProfileServiceDependency,
     userNameSchema: UserUserNameSchema,
-    idSchema: UserIDSchema = Depends(get_user_id),  # noqa: B008
+    idSchema: UserIDDependency,
 ) -> None:
     try:
         await service.edit_username(
@@ -53,3 +54,12 @@ async def edit_username(
         )
     except (UserNotFoundError, UserNameAlreadyRegistered) as error:
         raise HTTPException(status_code=404, detail=error.detail) from error
+
+
+@user_router.get("/chats", protected=True)
+async def get_chat_info(
+    service: ChatServiceDependency,
+    idSchema: UserIDDependency,
+) -> list[ChatInfoSchema]:
+    res = await service.get_chats_info(userIDSchema=idSchema)
+    return list(res)

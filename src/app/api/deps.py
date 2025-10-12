@@ -79,6 +79,9 @@ def get_user_id(tokenPayload: RequestTokenPayloadDependency) -> UserIDSchema:
     return UserIDSchema(id=tokenPayload.id)
 
 
+UserIDDependency = Annotated[UserIDSchema, Depends(get_user_id)]
+
+
 def get_cookie_manager(
     response: Response, config: ConfigDependency
 ) -> ResponseCookieManager:
