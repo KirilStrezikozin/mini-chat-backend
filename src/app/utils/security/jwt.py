@@ -6,7 +6,13 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 
 from app.core.config import Config
-from app.schemas import TokenPayload, TokenSchema, TokenType, UserIDSchema
+from app.schemas import (
+    TokenPayload,
+    TokenSchema,
+    TokenType,
+    UserIDSchema,
+    WebsocketTokenSchema,
+)
 from app.utils.exceptions import (
     InstantiationNotAllowedError,
     TokenValidationError,
@@ -68,11 +74,19 @@ class JWTManager:
         )
 
     @staticmethod
-    def create_refresh_token(config: Config, sub: dict) -> str:
+    def create_refresh_token(config: Config, sub: dict[str, Any]) -> str:
         return JWTManager.encode(
             config,
             sub,
             expires_in=timedelta(seconds=config.token.REFRESH_EXPIRES_SECONDS),
+        )
+
+    @staticmethod
+    def create_ws_access_token(config: Config, sub: dict[str, Any]) -> str:
+        return JWTManager.encode(
+            config,
+            sub,
+            expires_in=timedelta(seconds=config.token.WS_EXPIRES_SECONDS),
         )
 
     @staticmethod
@@ -87,3 +101,13 @@ class JWTManager:
         )
 
         return TokenSchema(access_token=access_token, refresh_token=refresh_token)
+
+    @staticmethod
+    def create_ws_token_schema(
+        config: Config, idSchema: UserIDSchema
+    ) -> WebsocketTokenSchema:
+        ws_access_token = JWTManager.create_ws_access_token(
+            config,
+            sub={"id": str(idSchema.id), "type": TokenType.ws_access_token.value},
+        )
+        return WebsocketTokenSchema(ws_access_token=ws_access_token)

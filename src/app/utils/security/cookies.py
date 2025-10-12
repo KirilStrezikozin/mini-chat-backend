@@ -1,13 +1,37 @@
-from fastapi import Response
+from fastapi import Response, WebSocket
 
 from app.core.config import Config
-from app.schemas import TokenSchema, TokenType
+from app.schemas import TokenPayload, TokenSchema, TokenType, WebsocketTokenSchema
+from app.utils.exceptions import TokenValidationError
+
+from .jwt import JWTManager
+
+
+class WebSocketCookieManager:
+    def __init__(self, config: Config, ws: WebSocket) -> None:
+        self.config = config
+        self.ws = ws
+
+    def validate_token_cookie(self) -> TokenPayload:
+        token = self.ws.cookies.get(TokenType.ws_access_token.value)
+        if token is None:
+            raise TokenValidationError
+        return JWTManager.validate_token(self.config, token, TokenType.ws_access_token)
 
 
 class ResponseCookieManager:
     def __init__(self, config: Config, response: Response) -> None:
         self.config = config
         self.response = response
+
+    def set_ws_token_cookie(self, tokenSchema: WebsocketTokenSchema) -> None:
+        self.response.set_cookie(
+            key=TokenType.ws_access_token.value,
+            value=tokenSchema.ws_access_token,
+            httponly=True,
+            secure=self.config.USE_SECURE_COOKIES,
+            max_age=self.config.token.WS_EXPIRES_SECONDS,
+        )
 
     def set_token_cookie(self, tokenSchema: TokenSchema) -> None:
         self.response.set_cookie(
@@ -28,3 +52,4 @@ class ResponseCookieManager:
     def unset_token_cookie(self) -> None:
         self.response.delete_cookie(key=TokenType.access_token.value)
         self.response.delete_cookie(key=TokenType.refresh_token.value)
+        self.response.delete_cookie(key=TokenType.ws_access_token.value)
