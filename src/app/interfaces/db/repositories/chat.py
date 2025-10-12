@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import override
 
+from sqlalchemy import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import ChatModel, ChatUserModel
-from app.schemas import ChatIDSchema, ChatRetrieveSchema, ChatSchema
+from app.db.models.mappings import PrimaryKeyID
+from app.schemas import ChatIDSchema, ChatRetrieveSchema, ChatSchema, UserIDSchema
+from app.utils.types import IDType
 
 from . import AbstractGenericRepository
 
@@ -22,6 +26,11 @@ class AbstractChatUserRepository(ABC):
         self._session = session
 
     @abstractmethod
+    async def get_chats_info(
+        self, idSchema: UserIDSchema
+    ) -> Sequence[Row[tuple[IDType, PrimaryKeyID, str, str]]]: ...
+
+    @abstractmethod
     async def get_chat(
-        self, retrieveSchema: ChatRetrieveSchema
+        self, userIdSchema: UserIDSchema, retrieveSchema: ChatRetrieveSchema
     ) -> ChatUserModel | None: ...

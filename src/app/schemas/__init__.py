@@ -2,6 +2,7 @@ __all__ = [
     "Base",
     "IDSchema",
     "ChatIDSchema",
+    "ChatInfoSchema",
     "ChatRetrieveSchema",
     "ChatSchema",
     "ChatSearchByType",
@@ -28,6 +29,7 @@ __all__ = [
     "UserIDSchema",
     "UserLoginSchema",
     "UserNameAnnotation",
+    "UserPasswordSchema",
     "UserProfileSchema",
     "UserReadSchema",
     "UserRegisterSchema",
@@ -37,6 +39,7 @@ __all__ = [
 from .base import Base, IDSchema
 from .chat import (
     ChatIDSchema,
+    ChatInfoSchema,
     ChatRetrieveSchema,
     ChatSchema,
     ChatSearchByType,
@@ -69,6 +72,7 @@ from .user import (
     UserIDSchema,
     UserLoginSchema,
     UserNameAnnotation,
+    UserPasswordSchema,
     UserProfileSchema,
     UserReadSchema,
     UserRegisterSchema,

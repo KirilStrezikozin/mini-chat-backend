@@ -1,14 +1,17 @@
+from collections.abc import Sequence
 from typing import override
 
-from sqlalchemy import select
+from sqlalchemy import Row, select
+from sqlalchemy.orm import aliased
 
-from app.db.models import ChatModel, ChatUserModel
+from app.db.models import ChatModel, ChatUserModel, PrimaryKeyID, UserModel
 from app.db.repositories import GenericRepository
 from app.interfaces.db.repositories import (
     AbstractChatRepository,
     AbstractChatUserRepository,
 )
-from app.schemas import ChatIDSchema, ChatRetrieveSchema, ChatSchema
+from app.schemas import ChatIDSchema, ChatRetrieveSchema, ChatSchema, UserIDSchema
+from app.utils.types import IDType
 
 
 class ChatRepository(
@@ -24,19 +27,44 @@ class ChatRepository(
         return obj
 
 
-class ChatUserRepository(AbstractChatUserRepository):
+class ChatUserRepository(
+    AbstractChatUserRepository,
+):
     model_cls = ChatUserModel
 
-    async def get_chat(
-        self, retrieveSchema: ChatRetrieveSchema
-    ) -> ChatUserModel | None:
-        stmt = select(self.model_cls.chat_id).where(
-            self.model_cls.user_id == retrieveSchema.user_id
+    async def get_chats_info(
+        self, idSchema: UserIDSchema
+    ) -> Sequence[Row[tuple[IDType, PrimaryKeyID, str, str]]]:
+        cu1 = aliased(self.model_cls)
+        cu2 = aliased(self.model_cls)
+        u2 = aliased(UserModel)
+
+        stmt = (
+            select(cu1.chat_id, u2.id, u2.fullname, u2.username)
+            .join(cu2, cu1.chat_id == cu2.chat_id)
+            .join(u2, u2.id == cu2.user_id)
+            .where(
+                cu1.user_id == idSchema.id,
+                cu2.user_id != idSchema.id,
+            )
         )
 
-        shared_chat_stmt = select(self.model_cls).where(
-            self.model_cls.user_id == retrieveSchema.with_user_id,
-            self.model_cls.chat_id.in_(stmt),
+        result = await self._session.execute(stmt)
+        return result.all()
+
+    async def get_chat(
+        self, userIdSchema: UserIDSchema, retrieveSchema: ChatRetrieveSchema
+    ) -> ChatUserModel | None:
+        cu1 = aliased(self.model_cls)
+        cu2 = aliased(self.model_cls)
+
+        shared_chat_stmt = (
+            select(cu1)
+            .join(cu2, cu1.chat_id == cu2.chat_id)
+            .where(
+                cu1.user_id == userIdSchema.id,
+                cu2.user_id == retrieveSchema.with_user_id,
+            )
         )
 
         result = await self._session.scalar(shared_chat_stmt)

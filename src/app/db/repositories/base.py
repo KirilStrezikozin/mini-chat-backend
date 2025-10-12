@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from operator import and_
 from typing import Any
 
 from pydantic import BaseModel
@@ -11,9 +12,10 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.orm.interfaces import ORMOption
 from sqlalchemy.sql.elements import SQLCoreOperations
 
-from app.db.models import PrimaryKeyIDMixin
+from app.db.models import PrimaryKeyID, PrimaryKeyIDMixin
 from app.interfaces.db.repositories import AbstractGenericRepository
 from app.schemas import IDSchema
 from app.utils.types import TCCA
@@ -28,8 +30,10 @@ class GenericRepository[T_model: PrimaryKeyIDMixin, T_ID: IDSchema, T_add: BaseM
         super().__init_subclass__(**kwargs)
         cls.model_cls = model
 
-    async def get(self, idSchema: IDSchema) -> T_model | None:
-        return await self._session.get(self.model_cls, idSchema.id)
+    async def get(
+        self, idSchema: IDSchema, options: Sequence[ORMOption] | None = None
+    ) -> T_model | None:
+        return await self._session.get(self.model_cls, idSchema.id, options=options)
 
     async def add_one(self, entity: T_add) -> T_model:
         obj = self.model_cls(**entity.model_dump())
@@ -57,17 +61,24 @@ class GenericRepository[T_model: PrimaryKeyIDMixin, T_ID: IDSchema, T_add: BaseM
         result = await self._session.execute(stmt)
         return result
 
-    async def get_column_scalars[T_co_0, T_co_1, T_co_2, T_co_f](
+    async def get_column_scalars[T_co_1, T_co_2, T_co_f](
         self,
-        attr: tuple[TCCA[T_co_0], TCCA[T_co_1], TCCA[T_co_2]],
+        id_attr: TCCA[PrimaryKeyID],
+        attrs: tuple[TCCA[T_co_1], TCCA[T_co_2]],
         filter_by: SQLCoreOperations[T_co_f],
+        skip_id: IDSchema,
         contains: str | None = None,
         count: int | None = None,
-    ) -> Sequence[Row[tuple[T_co_0, T_co_1, T_co_2]]]:
-        stmt = select(*attr)
+    ) -> Sequence[Row[tuple[PrimaryKeyID, T_co_1, T_co_2]]]:
+        stmt = select(id_attr, *attrs)
 
         if contains:
-            stmt = stmt.where(func.lower(filter_by).contains(contains, autoescape=True))
+            stmt = stmt.where(
+                and_(
+                    func.lower(filter_by).contains(contains, autoescape=True),
+                    id_attr != skip_id.id,
+                )
+            )
         if count:
             stmt = stmt.limit(count)
 

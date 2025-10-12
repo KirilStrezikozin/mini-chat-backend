@@ -6,6 +6,7 @@ from app.schemas import (
     UserCreateSchema,
     UserIDSchema,
     UserLoginSchema,
+    UserPasswordSchema,
     UserReadSchema,
     UserRegisterSchema,
 )
@@ -17,6 +18,7 @@ from .exceptions import (
     UserEmailNotFoundError,
     UserNameAlreadyRegistered,
     UserNameNotFoundError,
+    UserNotFoundError,
 )
 
 
@@ -75,3 +77,17 @@ class UserAuthService(BaseService):
             user = UserReadSchema.model_validate(resource)
 
         return JWTManager.create_token_schema(self.config, UserIDSchema(id=user.id))
+
+    async def delete_account(
+        self, *, idSchema: UserIDSchema, passwordSchema: UserPasswordSchema
+    ) -> None:
+        async with self.uow as uow:
+            resource = await uow.userRepository.get(idSchema)
+            if not resource:
+                raise UserNotFoundError
+
+            user = UserReadSchema.model_validate(resource)
+            PasswordManager.verify_password(passwordSchema.password, user.password_hash)
+
+            await uow.userRepository.delete_one(idSchema)
+            await uow.commit()

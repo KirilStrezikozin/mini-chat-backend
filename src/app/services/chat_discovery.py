@@ -4,7 +4,7 @@ from sqlalchemy import Row
 
 from app.db.models.mappings import PrimaryKeyID
 from app.db.repositories import UserRepository
-from app.schemas import ChatSearchByType, ChatSearchResultSchema
+from app.schemas import ChatSearchByType, ChatSearchResultSchema, UserIDSchema
 
 from . import BaseService
 
@@ -15,15 +15,18 @@ class ChatDiscoveryService(BaseService):
         *,
         contains: str,
         by: ChatSearchByType,
+        skip_id: UserIDSchema,
         count: int | None = None,
     ) -> Iterable[ChatSearchResultSchema]:
         async with self.uow as uow:
             model = UserRepository.model_cls
-            attr = model.fullname if by.value == "fullname" else model.username
+            filter_by = model.fullname if by.value == "fullname" else model.username
 
             res = await uow.userRepository.get_column_scalars(
-                (model.id, model.fullname, model.username),
-                attr,
+                model.id,
+                (model.fullname, model.username),
+                filter_by,
+                skip_id,
                 contains.lower(),
                 count,
             )

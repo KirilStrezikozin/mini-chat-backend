@@ -21,6 +21,10 @@ class UserUserNameSchema(Base):
     username: UserNameAnnotation
 
 
+class UserPasswordSchema(Base):
+    password: str
+
+
 class UserProfileSchema(UserUserNameSchema, UserFullNameSchema):
     email: EmailStr
 
@@ -33,8 +37,8 @@ class UserReadSchema(UserIDSchema, UserCreateSchema):
     pass
 
 
-class UserRegisterSchema(UserProfileSchema):
-    password: str
+class UserRegisterSchema(UserPasswordSchema, UserProfileSchema):
+    pass
 
 
 class UserLoginSchema(Base):

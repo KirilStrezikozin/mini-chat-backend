@@ -1,30 +1,64 @@
 class UserNameNotFoundError(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "User with this username not found"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class UserEmailNotFoundError(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "User with this email not found"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class UserNotFoundError(BaseException):
-    pass
+    def __init__(self, *args: object, detail: str = "User not found") -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class ChatNotFoundError(BaseException):
-    pass
+    def __init__(self, *args: object, detail: str = "Chat not found") -> None:
+        self.detail = detail
+        super().__init__(*args)
+
+
+class InalidChatUserID(BaseException):
+    def __init__(self, *args: object, detail: str) -> None:
+        self.detail = detail
+        super().__init__(detail, *args)
 
 
 class MessageNotFoundError(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "Requested message not found"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class UserEmailAlreadyRegistered(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "A user with this email already exists"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class UserNameAlreadyRegistered(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "A user with this username already exists"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
 
 
 class UserNameMustStartWithAtSign(BaseException):
-    pass
+    def __init__(
+        self, *args: object, detail: str = "Username must start with @ (at) sign"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)

@@ -20,7 +20,6 @@ class ChatUserSchema(Base):
 
 
 class ChatRetrieveSchema(Base):
-    user_id: IDType
     with_user_id: IDType
 
 
@@ -31,3 +30,7 @@ class ChatSearchByType(str, Enum):
 
 class ChatSearchResultSchema(UserIDSchema, UserFullNameSchema, UserUserNameSchema):
     pass
+
+
+class ChatInfoSchema(UserIDSchema, UserFullNameSchema, UserUserNameSchema):
+    chat_id: IDType
