@@ -22,7 +22,7 @@ class MessageRepository(
     async def fetch_messages(
         self,
         *,
-        chat_id: ChatIDSchema,
+        chat_id_schema: ChatIDSchema,
         since: datetime | None = None,
         until: datetime | None = None,
         count: int | None = None,
@@ -40,7 +40,7 @@ class MessageRepository(
             select(self.model_cls)
             .where(
                 and_(
-                    self.model_cls.chat_id == chat_id,
+                    self.model_cls.chat_id == chat_id_schema.id,
                     period_clause,
                 )
             )

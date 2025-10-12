@@ -19,7 +19,7 @@ class AbstractMessageRepository(
     async def fetch_messages(
         self,
         *,
-        chat_id: ChatIDSchema,
+        chat_id_schema: ChatIDSchema,
         since: datetime | None = None,
         until: datetime | None = None,
         count: int | None = None,
