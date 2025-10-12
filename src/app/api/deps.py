@@ -4,8 +4,13 @@ from fastapi import Depends, Request, Response
 
 from app.core.config import Config, config
 from app.db.session import async_session_factory
-from app.schemas import TokenPayload
-from app.services import ChatDiscoveryService, UserAuthService
+from app.schemas import TokenPayload, UserIDSchema
+from app.services import (
+    ChatDiscoveryService,
+    ChatService,
+    UserAuthService,
+    UserProfileService,
+)
 from app.utils.security import JWTManager, ResponseCookieManager
 from app.utils.uow import AsyncUnitOfWork
 
@@ -45,11 +50,33 @@ ChatDiscoveryServiceDependency = Annotated[
 ]
 
 
+def get_user_profile_service(
+    uow: UoWDependency, config: ConfigDependency
+) -> UserProfileService:
+    return UserProfileService(config, uow)
+
+
+UserProfileServiceDependency = Annotated[
+    UserProfileService, Depends(get_user_profile_service)
+]
+
+
+def get_chat_service(uow: UoWDependency, config: ConfigDependency) -> ChatService:
+    return ChatService(config, uow)
+
+
+ChatServiceDependency = Annotated[ChatService, Depends(get_chat_service)]
+
+
 def get_token_payload(request: Request) -> TokenPayload:
     return JWTManager.get_request_token_payload(request)
 
 
 RequestTokenPayloadDependency = Annotated[TokenPayload, Depends(get_token_payload)]
+
+
+def get_user_id(tokenPayload: RequestTokenPayloadDependency) -> UserIDSchema:
+    return UserIDSchema(id=tokenPayload.id)
 
 
 def get_cookie_manager(
