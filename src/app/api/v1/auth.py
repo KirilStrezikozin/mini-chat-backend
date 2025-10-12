@@ -1,10 +1,13 @@
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException, WebSocket
 
 from app.api.deps import (
+    ConfigDependency,
     ResponseCookieManagerDependency,
     UserAuthServiceDependency,
-    get_user_id,
+    UserIDDependency,
+    WebSocketCookieManagerDependency,
 )
+from app.core.logger import logger
 from app.schemas import (
     UserIDSchema,
     UserLoginSchema,
@@ -18,8 +21,14 @@ from app.services.exceptions import (
     UserNameNotFoundError,
     UserNotFoundError,
 )
-from app.utils.exceptions import PasswordVerificationError
+from app.utils.exceptions import (
+    PasswordVerificationError,
+    TokenValidationError,
+    WebSocketClientAlreadyConnected,
+)
 from app.utils.router import APIRouterWithRouteProtection
+from app.utils.security import JWTManager
+from app.utils.websockets import WebSocketConnectionManager
 
 auth_router = APIRouterWithRouteProtection(prefix="/auth", tags=["auth"])
 
@@ -70,7 +79,7 @@ async def delete_account(
     service: UserAuthServiceDependency,
     cookie_manager: ResponseCookieManagerDependency,
     passwordSchema: UserPasswordSchema,
-    idSchema: UserIDSchema = Depends(get_user_id),  # noqa: B008
+    idSchema: UserIDDependency,
 ) -> None:
     try:
         await service.delete_account(idSchema=idSchema, passwordSchema=passwordSchema)
@@ -87,3 +96,48 @@ async def token() -> None:
     # Protected route. It will only reach this place
     # and return status 200 if the middleware validated the token.
     pass
+
+
+@auth_router.websocket("/ws")
+async def websocket_endpoint(
+    cookie_manager: WebSocketCookieManagerDependency, ws: WebSocket
+):
+    try:
+        tokenPayload = cookie_manager.validate_token_cookie()
+    except TokenValidationError:
+        await ws.close(code=1000)
+        return
+
+    def recv_callback(payload: object):
+        logger.info(
+            f"{WebSocketConnectionManager.__name__}: client",
+            tokenPayload.id,
+            "received data:",
+            payload,
+        )
+
+    try:
+        await WebSocketConnectionManager.handle_connection(
+            user=UserIDSchema(id=tokenPayload.id),
+            websocket=ws,
+            recv_callback=recv_callback,
+        )
+    except WebSocketClientAlreadyConnected:
+        logger.info(
+            f"{WebSocketConnectionManager.__name__}: client",
+            tokenPayload.id,
+            "already connected",
+        )
+
+        await ws.close(code=1000)
+        return
+
+
+@auth_router.get("/ws/token", protected=True)
+async def websocket_token(
+    config: ConfigDependency,
+    cookie_manager: ResponseCookieManagerDependency,
+    idSchema: UserIDDependency,
+) -> None:
+    tokenSchema = JWTManager.create_ws_token_schema(config, idSchema)
+    cookie_manager.set_ws_token_cookie(tokenSchema)

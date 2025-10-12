@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, Request, Response
+from fastapi import Depends, Request, Response, WebSocket
 
 from app.core.config import Config, config
 from app.db.session import async_session_factory
@@ -11,7 +11,7 @@ from app.services import (
     UserAuthService,
     UserProfileService,
 )
-from app.utils.security import JWTManager, ResponseCookieManager
+from app.utils.security import JWTManager, ResponseCookieManager, WebSocketCookieManager
 from app.utils.uow import AsyncUnitOfWork
 
 
@@ -90,4 +90,15 @@ def get_cookie_manager(
 
 ResponseCookieManagerDependency = Annotated[
     ResponseCookieManager, Depends(get_cookie_manager)
+]
+
+
+def get_websocket_cookie_manager(
+    config: ConfigDependency, ws: WebSocket
+) -> WebSocketCookieManager:
+    return WebSocketCookieManager(config, ws)
+
+
+WebSocketCookieManagerDependency = Annotated[
+    WebSocketCookieManager, Depends(get_websocket_cookie_manager)
 ]

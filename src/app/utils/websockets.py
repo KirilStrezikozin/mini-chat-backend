@@ -13,7 +13,7 @@ from app.utils.exceptions import (
 from app.utils.types import IDType
 
 
-class WebsocketConnectionManager:
+class WebSocketConnectionManager:
     connections: dict[IDType, WebSocket] = {}
 
     def __init__(self) -> None:

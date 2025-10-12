@@ -22,11 +22,11 @@ class InstantiationNotAllowedError(BaseException):
 
 class ClientNotConnectedError(BaseException):
     def __init__(self, id: str) -> None:
-        super().__init__(f"Websocket client with id={id} is not in the connection pool")
+        super().__init__(f"WebSocket client with id={id} is not in the connection pool")
 
 
 class WebSocketClientAlreadyConnected(BaseException):
     def __init__(self, id: str) -> None:
         super().__init__(
-            f"Websocket client with id={id} is already in the connection pool"
+            f"WebSocket client with id={id} is already in the connection pool"
         )
