@@ -20,12 +20,15 @@ class MessageTimestampSchema(Base):
     timestamp: datetime
 
 
-class MessageCreateSchema(MessageContentSchema, MessageTimestampSchema):
-    sender_id: IDType
+class MessageSendSchema(MessageContentSchema):
     chat_id: IDType
 
 
-class MessageReadSchema(MessageIDSchema, MessageCreateSchema):
+class MessageCreateSchema(MessageSendSchema):
+    sender_id: IDType
+
+
+class MessageReadSchema(MessageIDSchema, MessageTimestampSchema, MessageCreateSchema):
     pass
 
 
