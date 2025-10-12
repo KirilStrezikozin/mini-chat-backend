@@ -1,16 +1,16 @@
 __all__ = [
     "BaseService",
     "ChatService",
+    "ChatDiscoveryService",
     "EditMessageService",
     "UserAuthService",
-    "UserDiscoveryService",
     "UserProfileService",
 ]
 
 
 from .base import BaseService
 from .chat import ChatService
+from .chat_discovery import ChatDiscoveryService
 from .edit_message import EditMessageService
 from .user_auth import UserAuthService
-from .user_discovery import UserDiscoveryService
 from .user_profile import UserProfileService

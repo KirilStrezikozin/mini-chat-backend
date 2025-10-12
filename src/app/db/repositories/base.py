@@ -2,12 +2,21 @@ from collections.abc import Sequence
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import ColumnExpressionArgument, Result, delete, select, update
+from sqlalchemy import (
+    ColumnExpressionArgument,
+    Result,
+    Row,
+    delete,
+    func,
+    select,
+    update,
+)
 from sqlalchemy.sql.elements import SQLCoreOperations
 
 from app.db.models import PrimaryKeyIDMixin
 from app.interfaces.db.repositories import AbstractGenericRepository
 from app.schemas import IDSchema
+from app.utils.types import TCCA
 
 
 class GenericRepository[T_model: PrimaryKeyIDMixin, T_ID: IDSchema, T_add: BaseModel](
@@ -48,18 +57,19 @@ class GenericRepository[T_model: PrimaryKeyIDMixin, T_ID: IDSchema, T_add: BaseM
         result = await self._session.execute(stmt)
         return result
 
-    async def get_column_scalars[T_co](
+    async def get_column_scalars[T_co_0, T_co_1, T_co_2, T_co_f](
         self,
-        attr: SQLCoreOperations[T_co],
+        attr: tuple[TCCA[T_co_0], TCCA[T_co_1], TCCA[T_co_2]],
+        filter_by: SQLCoreOperations[T_co_f],
         contains: str | None = None,
         count: int | None = None,
-    ) -> Sequence[T_co]:
-        stmt = select(attr)
+    ) -> Sequence[Row[tuple[T_co_0, T_co_1, T_co_2]]]:
+        stmt = select(*attr)
 
         if contains:
-            stmt = stmt.where(attr.contains(contains, autoescape=True))
+            stmt = stmt.where(func.lower(filter_by).contains(contains, autoescape=True))
         if count:
             stmt = stmt.limit(count)
 
         result = await self._session.execute(stmt)
-        return result.scalars().all()
+        return result.all()

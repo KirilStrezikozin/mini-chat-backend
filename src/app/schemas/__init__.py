@@ -4,6 +4,8 @@ __all__ = [
     "ChatIDSchema",
     "ChatRetrieveSchema",
     "ChatSchema",
+    "ChatSearchByType",
+    "ChatSearchResultSchema",
     "ChatUserSchema",
     "MessageChangeContentSchema",
     "MessageContentSchema",
@@ -33,7 +35,14 @@ __all__ = [
 ]
 
 from .base import Base, IDSchema
-from .chat import ChatIDSchema, ChatRetrieveSchema, ChatSchema, ChatUserSchema
+from .chat import (
+    ChatIDSchema,
+    ChatRetrieveSchema,
+    ChatSchema,
+    ChatSearchByType,
+    ChatSearchResultSchema,
+    ChatUserSchema,
+)
 from .message import (
     MessageChangeContentSchema,
     MessageContentSchema,
