@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 
 from app.api.deps import (
     ResponseCookieManagerDependency,
@@ -12,8 +12,9 @@ from app.services.exceptions import (
     UserNameNotFoundError,
 )
 from app.utils.exceptions import PasswordVerificationError
+from app.utils.router import APIRouterWithRouteProtection
 
-auth_router = APIRouter(prefix="/auth", tags=["auth"])
+auth_router = APIRouterWithRouteProtection(prefix="/auth", tags=["auth"])
 
 
 @auth_router.post("/register")
@@ -56,14 +57,14 @@ async def login(
         ) from error
 
 
-@auth_router.post("/logout")
+@auth_router.post("/logout", protected=True)
 async def logout(
     cookie_manager: ResponseCookieManagerDependency,
 ) -> None:
     cookie_manager.unset_token_cookie()
 
 
-@auth_router.get("/token")
+@auth_router.get("/token", protected=True)
 async def token() -> None:
     # Protected route. It will only reach this place
     # and return status 200 if the middleware validated the token.

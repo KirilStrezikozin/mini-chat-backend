@@ -1,12 +1,11 @@
-from fastapi import APIRouter
-
 from app.api.deps import ChatDiscoveryServiceDependency
 from app.schemas import ChatSearchByType, ChatSearchResultSchema
+from app.utils.router import APIRouterWithRouteProtection
 
-chat_router = APIRouter(prefix="/chat", tags=["chat"])
+chat_router = APIRouterWithRouteProtection(prefix="/chat", tags=["chat"])
 
 
-@chat_router.get("/search/{by}")
+@chat_router.get("/search/{by}", protected=True)
 async def search(
     service: ChatDiscoveryServiceDependency,
     contains: str,
