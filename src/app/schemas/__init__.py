@@ -21,7 +21,7 @@ __all__ = [
     "TokenPayload",
     "TokenSchema",
     "TokenType",
-    "WebsocketTokenSchema",
+    "WebSocketTokenSchema",
     "AccessTokenSchema",
     "RefreshTokenSchema",
     "UserChangeFullNameSchema",
@@ -67,7 +67,7 @@ from .token import (
     TokenPayload,
     TokenSchema,
     TokenType,
-    WebsocketTokenSchema,
+    WebSocketTokenSchema,
 )
 from .user import (
     UserChangeFullNameSchema,

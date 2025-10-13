@@ -11,7 +11,7 @@ from app.schemas import (
     TokenSchema,
     TokenType,
     UserIDSchema,
-    WebsocketTokenSchema,
+    WebSocketTokenSchema,
 )
 from app.utils.exceptions import (
     InstantiationNotAllowedError,
@@ -105,9 +105,9 @@ class JWTManager:
     @staticmethod
     def create_ws_token_schema(
         config: Config, idSchema: UserIDSchema
-    ) -> WebsocketTokenSchema:
+    ) -> WebSocketTokenSchema:
         ws_access_token = JWTManager.create_ws_access_token(
             config,
             sub={"id": str(idSchema.id), "type": TokenType.ws_access_token.value},
         )
-        return WebsocketTokenSchema(ws_access_token=ws_access_token)
+        return WebSocketTokenSchema(ws_access_token=ws_access_token)

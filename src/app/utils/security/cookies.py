@@ -1,7 +1,7 @@
 from fastapi import Response, WebSocket
 
 from app.core.config import Config
-from app.schemas import TokenPayload, TokenSchema, TokenType, WebsocketTokenSchema
+from app.schemas import TokenPayload, TokenSchema, TokenType, WebSocketTokenSchema
 from app.utils.exceptions import TokenValidationError
 
 from .jwt import JWTManager
@@ -24,7 +24,7 @@ class ResponseCookieManager:
         self.config = config
         self.response = response
 
-    def set_ws_token_cookie(self, tokenSchema: WebsocketTokenSchema) -> None:
+    def set_ws_token_cookie(self, tokenSchema: WebSocketTokenSchema) -> None:
         self.response.set_cookie(
             key=TokenType.ws_access_token.value,
             value=tokenSchema.ws_access_token,

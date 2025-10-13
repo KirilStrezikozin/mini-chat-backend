@@ -15,7 +15,7 @@ class TokenSchema(AccessTokenSchema, RefreshTokenSchema):
     pass
 
 
-class WebsocketTokenSchema(Base):
+class WebSocketTokenSchema(Base):
     ws_access_token: str
 
 
