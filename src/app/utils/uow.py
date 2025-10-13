@@ -2,6 +2,7 @@ from types import TracebackType
 from typing import Self
 
 from app.db.repositories import (
+    AttachmentRepository,
     ChatRepository,
     ChatUserRepository,
     MessageRepository,
@@ -17,6 +18,7 @@ class AsyncUnitOfWork(AbstractAsyncUnitOfWork):
         self.messageRepository = MessageRepository(self._async_session)
         self.chatRepository = ChatRepository(self._async_session)
         self.chatUserRepository = ChatUserRepository(self._async_session)
+        self.attachmentRepository = AttachmentRepository(self._async_session)
         return self
 
     async def __aexit__(

@@ -5,6 +5,7 @@ from fastapi.websockets import WebSocket, WebSocketDisconnect
 
 from app.core.logger import logger
 from app.schemas import (
+    MessageAttachmentAnnouncementSchema,
     MessageDeleteAnnouncementSchema,
     MessagePutAnnouncementSchema,
     UserIDSchema,
@@ -51,8 +52,12 @@ class WebSocketConnectionManager:
                 f"{cls.__name__}: connection with client {user.id} already established",
             )
 
+            # We could either close the connection (the client will likely keep
+            # retrying), or drop the old and switch to this one.
+            # await cls.connections[user.id].close(1000)
+
             # raise WebSocketClientAlreadyConnected(str(user.id))
-            await websocket.close(1000)
+            # await websocket.close(1000)
             return
 
         await websocket.accept()
@@ -107,7 +112,9 @@ class WebSocketController:
     async def announce(
         *,
         users: Iterable[UserIDSchema],
-        model: MessagePutAnnouncementSchema | MessageDeleteAnnouncementSchema,
+        model: MessagePutAnnouncementSchema
+        | MessageDeleteAnnouncementSchema
+        | MessageAttachmentAnnouncementSchema,
         from_user: UserIDSchema | None = None,
     ):
         """

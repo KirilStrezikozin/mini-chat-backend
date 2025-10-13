@@ -40,6 +40,14 @@ class MessageNotFoundError(BaseException):
         super().__init__(*args)
 
 
+class AttachmentNotFoundError(BaseException):
+    def __init__(
+        self, *args: object, detail: str = "Requested attachment not found"
+    ) -> None:
+        self.detail = detail
+        super().__init__(*args)
+
+
 class UserEmailAlreadyRegistered(BaseException):
     def __init__(
         self, *args: object, detail: str = "A user with this email already exists"
