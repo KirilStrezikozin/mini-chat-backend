@@ -90,7 +90,10 @@ class ChatService(BaseService):
 
             chatResource = await uow.chatRepository.get(
                 ChatIDSchema(id=chatUserSchema.chat_id),
-                options=[selectinload(ChatRepository.model_cls.users)],
+                options=[
+                    selectinload(ChatRepository.model_cls.users),
+                    selectinload(ChatRepository.model_cls.messages),
+                ],
             )
 
             if not chatResource:

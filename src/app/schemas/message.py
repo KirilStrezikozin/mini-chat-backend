@@ -40,6 +40,10 @@ class MessageChangeContentSchema(MessageIDSchema, MessageContentSchema):
     pass
 
 
+class MessageEditSchema(MessageContentSchema, MessageIDSchema):
+    pass
+
+
 class MessageFetchSchema(Base):
     chat_id: IDType
     since: datetime | None = None
