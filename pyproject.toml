@@ -20,6 +20,7 @@ python-jose = "^3.5.0"
 websockets = "^15.0.1"
 asyncpg = "^0.30.0"
 greenlet = "^3.2.4"
+boto3 = "^1.40.50"
 
 [build-system]
 requires = ["poetry-core"]

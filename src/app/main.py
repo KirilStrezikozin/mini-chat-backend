@@ -8,12 +8,17 @@ from app.api import api_v1_router
 from app.core.config import config
 from app.utils.middleware import AuthenticationMiddleware
 from app.utils.router import resolve_protected_paths
+from app.utils.s3 import create_s3_client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     engine = create_async_engine(config.database.uri)
     app.state.engine = engine
+
+    s3_client = create_s3_client(config)
+    app.state.s3_client = s3_client
+
     yield
     await engine.dispose()
 

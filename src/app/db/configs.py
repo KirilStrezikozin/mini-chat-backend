@@ -1,4 +1,4 @@
-from pydantic import PostgresDsn, computed_field
+from pydantic import BaseModel, PostgresDsn, computed_field
 
 from app.interfaces.db.configs import AbstractDatabaseConfig
 
@@ -26,6 +26,16 @@ class PostgresDsnConfig(AbstractDatabaseConfig):
                 path=self.POSTGRES_DB,
             )
         )
+
+
+class AwsS3BucketConfig(BaseModel):
+    ENDPOINT_URL: str
+    ACCESS_KEY_ID: str
+    SECRET_ACCESS_KEY: str
+    SIGNATURE_VERSION: str = "s3v4"
+    REGION_NAME: str = "auto"
+    BUCKET_NAME: str
+    PRESIGNED_URL_EXPIRES_IN: int = 30
 
 
 """Available database configuration classes keyed by name."""
