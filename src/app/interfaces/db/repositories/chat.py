@@ -10,7 +10,7 @@ from app.db.models.mappings import PrimaryKeyID
 from app.schemas import ChatIDSchema, ChatRetrieveSchema, ChatSchema, UserIDSchema
 from app.utils.types import IDType
 
-from . import AbstractGenericRepository
+from .base import AbstractGenericRepository
 
 
 class AbstractChatRepository(

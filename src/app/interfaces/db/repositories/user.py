@@ -4,7 +4,7 @@ from app.schemas.user import (
     UserIDSchema,
 )
 
-from . import AbstractGenericRepository
+from .base import AbstractGenericRepository
 
 
 class AbstractUserRepository(

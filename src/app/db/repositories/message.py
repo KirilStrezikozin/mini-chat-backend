@@ -36,16 +36,17 @@ class MessageRepository(
             assert until is not None
             period_clause = self.model_cls.timestamp < until
 
-        stmt = (
-            select(self.model_cls)
-            .where(
-                and_(
-                    self.model_cls.chat_id == chat_id_schema.id,
-                    period_clause,
-                )
+        stmt = select(self.model_cls).where(
+            and_(
+                self.model_cls.chat_id == chat_id_schema.id,
+                period_clause,
             )
-            .order_by(self.model_cls.timestamp.asc())
         )
+
+        if since:
+            stmt = stmt.order_by(self.model_cls.timestamp.asc())
+        else:
+            stmt = stmt.order_by(self.model_cls.timestamp.desc())
 
         if count:
             stmt = stmt.limit(count)

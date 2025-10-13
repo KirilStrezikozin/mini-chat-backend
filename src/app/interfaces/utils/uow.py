@@ -5,6 +5,7 @@ from typing import Self
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.interfaces.db.repositories import (
+    AbstractAttachmentRepository,
     AbstractChatRepository,
     AbstractChatUserRepository,
     AbstractMessageRepository,
@@ -21,6 +22,7 @@ class AbstractAsyncUnitOfWork(ABC):
     messageRepository: AbstractMessageRepository
     chatRepository: AbstractChatRepository
     chatUserRepository: AbstractChatUserRepository
+    attachmentRepository: AbstractAttachmentRepository
 
     def __init__(self, async_session_factory: Factory[AsyncSession]) -> None:
         self._async_session_factory = async_session_factory

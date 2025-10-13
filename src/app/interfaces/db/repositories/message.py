@@ -9,7 +9,7 @@ from app.schemas import (
     MessageIDSchema,
 )
 
-from . import AbstractGenericRepository
+from .base import AbstractGenericRepository
 
 
 class AbstractMessageRepository(
