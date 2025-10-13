@@ -8,7 +8,7 @@ from app.schemas import TokenPayload, UserIDSchema
 from app.services import (
     ChatDiscoveryService,
     ChatService,
-    EditMessageService,
+    MessageService,
     UserAuthService,
     UserProfileService,
 )
@@ -69,15 +69,11 @@ def get_chat_service(uow: UoWDependency, config: ConfigDependency) -> ChatServic
 ChatServiceDependency = Annotated[ChatService, Depends(get_chat_service)]
 
 
-def get_edit_message_service(
-    uow: UoWDependency, config: ConfigDependency
-) -> EditMessageService:
-    return EditMessageService(config, uow)
+def get_message_service(uow: UoWDependency, config: ConfigDependency) -> MessageService:
+    return MessageService(config, uow)
 
 
-EditMessageServiceDependency = Annotated[
-    EditMessageService, Depends(get_edit_message_service)
-]
+MessageServiceDependency = Annotated[MessageService, Depends(get_message_service)]
 
 
 def get_token_payload(request: Request) -> TokenPayload:
