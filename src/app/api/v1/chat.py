@@ -1,13 +1,16 @@
+from collections.abc import Sequence
 from datetime import datetime
 
 from fastapi import HTTPException
 
 from app.api.deps import (
+    AttachmentServiceDependency,
     ChatDiscoveryServiceDependency,
     ChatServiceDependency,
     UserIDDependency,
 )
 from app.schemas import (
+    AttachmentReadSchema,
     ChatIDSchema,
     ChatRetrieveSchema,
     ChatSchema,
@@ -121,7 +124,7 @@ async def send(
                 sender_id=idSchema.id,
                 chat_id=messageSchema.chat_id,
                 content=messageSchema.content,
-            )
+            ),
         )
 
         chat_users = await service.get_users(
@@ -141,3 +144,16 @@ async def send(
         pass
 
     return newMessageSchema
+
+
+@chat_router.get("/attachments", protected=True)
+async def get_attachments(
+    chat_id: IDType,
+    service: AttachmentServiceDependency,
+) -> Sequence[AttachmentReadSchema]:
+    try:
+        res = await service.get_all_in_chat(chat_schema=ChatIDSchema(id=chat_id))
+        return list(res)
+
+    except ChatNotFoundError as error:
+        raise HTTPException(status_code=404, detail=error.detail) from error

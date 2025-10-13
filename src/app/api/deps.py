@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Request, Response, WebSocket
 
@@ -6,6 +6,7 @@ from app.core.config import Config, config
 from app.db.session import async_session_factory
 from app.schemas import TokenPayload, UserIDSchema
 from app.services import (
+    AttachmentService,
     ChatDiscoveryService,
     ChatService,
     MessageService,
@@ -29,6 +30,13 @@ def get_uow(request: Request) -> AsyncUnitOfWork:
 
 
 UoWDependency = Annotated[AsyncUnitOfWork, Depends(get_uow)]
+
+
+def get_s3_client(request: Request):
+    return request.app.state.s3_client
+
+
+S3ClientDependency = Annotated[Any, Depends(get_s3_client)]
 
 
 def get_user_auth_service(
@@ -74,6 +82,17 @@ def get_message_service(uow: UoWDependency, config: ConfigDependency) -> Message
 
 
 MessageServiceDependency = Annotated[MessageService, Depends(get_message_service)]
+
+
+def get_attachment_service(
+    uow: UoWDependency, config: ConfigDependency
+) -> AttachmentService:
+    return AttachmentService(config, uow)
+
+
+AttachmentServiceDependency = Annotated[
+    AttachmentService, Depends(get_attachment_service)
+]
 
 
 def get_token_payload(request: Request) -> TokenPayload:
