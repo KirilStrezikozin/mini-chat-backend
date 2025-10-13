@@ -4,10 +4,10 @@ import warnings
 from pathlib import Path
 from typing import Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, HttpUrl, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.db.configs import PostgresDsnConfig
+from app.db.configs import AwsS3BucketConfig, PostgresDsnConfig
 
 
 class TokenConfig(BaseModel):
@@ -37,11 +37,12 @@ class Config(BaseSettings):
     FRONTEND_PORT: int = 3000
     BACKEND_PORT: int = 8000
     BACKEND_HOST: str = "localhost"
-    BACKEND_URL: str = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
-    FRONTEND_URL: str = "http://localhost:3000"
+    BACKEND_URL: HttpUrl = HttpUrl(f"http://{BACKEND_HOST}:{BACKEND_PORT}")
+    FRONTEND_URL: HttpUrl = HttpUrl("http://localhost:3000")
 
     token: TokenConfig = TokenConfig()
     database: PostgresDsnConfig  # Preferred db configuration
+    s3: AwsS3BucketConfig
 
     @model_validator(mode="after")
     def _ensure_has_secret_key(self) -> Self:
