@@ -8,7 +8,6 @@ from app.schemas.user import UserIDSchema
 from app.utils.exceptions import (
     ClientNotConnectedError,
     InstantiationNotAllowedError,
-    WebSocketClientAlreadyConnected,
 )
 from app.utils.types import IDType
 
@@ -44,7 +43,13 @@ class WebSocketConnectionManager:
         recv_callback: Callable[[object], None] | None = None,
     ) -> None:
         if cls.is_connected(user):
-            raise WebSocketClientAlreadyConnected(str(user.id))
+            logger.info(
+                f"{cls.__name__}: connection with client {user.id} already established",
+            )
+
+            # raise WebSocketClientAlreadyConnected(str(user.id))
+            await websocket.close(1000)
+            return
 
         await websocket.accept()
         cls.connections[user.id] = websocket
