@@ -12,7 +12,7 @@ from app.schemas import (
 )
 from app.utils.security import JWTManager, PasswordManager
 
-from . import BaseService
+from .base import BaseService
 from .exceptions import (
     UserEmailAlreadyRegistered,
     UserEmailNotFoundError,
@@ -73,7 +73,6 @@ class UserAuthService(BaseService):
 
             resource = await uow.userRepository.add_one(userSchema)
             await uow.commit()
-
             user = UserReadSchema.model_validate(resource)
 
         return JWTManager.create_token_schema(self.config, UserIDSchema(id=user.id))

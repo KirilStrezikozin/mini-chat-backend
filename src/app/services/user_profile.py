@@ -8,7 +8,7 @@ from app.schemas import (
     UserUserNameSchema,
 )
 
-from . import BaseService
+from .base import BaseService
 from .exceptions import UserNameAlreadyRegistered, UserNotFoundError
 
 

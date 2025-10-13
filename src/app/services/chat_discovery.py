@@ -6,7 +6,7 @@ from app.db.models.mappings import PrimaryKeyID
 from app.db.repositories import UserRepository
 from app.schemas import ChatSearchByType, ChatSearchResultSchema, UserIDSchema
 
-from . import BaseService
+from .base import BaseService
 
 
 class ChatDiscoveryService(BaseService):

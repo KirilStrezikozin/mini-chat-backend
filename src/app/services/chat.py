@@ -2,7 +2,7 @@ from collections.abc import Generator, Iterable
 
 from sqlalchemy.orm import selectinload
 
-from app.db.repositories.chat import ChatRepository
+from app.db.repositories import ChatRepository
 from app.schemas import (
     ChatIDSchema,
     ChatInfoSchema,
@@ -15,7 +15,7 @@ from app.schemas import (
     UserIDSchema,
 )
 
-from . import BaseService
+from .base import BaseService
 from .exceptions import ChatNotFoundError, InalidChatUserID, UserNotFoundError
 
 
@@ -105,6 +105,7 @@ class ChatService(BaseService):
             else:
                 raise ChatNotFoundError
 
+            await uow.chatRepository.delete_one(ChatIDSchema(id=chatUserSchema.chat_id))
             await uow.commit()
 
     async def send_message(
@@ -124,6 +125,7 @@ class ChatService(BaseService):
                 raise UserNotFoundError(detail="Sender not found")
 
             resource = await uow.messageRepository.add_one(messageSchema)
+
             await uow.commit()
             return MessageReadSchema.model_validate(resource)
 
