@@ -1,10 +1,14 @@
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 
 from app.core.logger import logger
-from app.schemas.user import UserIDSchema
+from app.schemas import (
+    MessageDeleteAnnouncementSchema,
+    MessagePutAnnouncementSchema,
+    UserIDSchema,
+)
 from app.utils.exceptions import (
     ClientNotConnectedError,
     InstantiationNotAllowedError,
@@ -93,3 +97,30 @@ class WebSocketConnectionManager:
                 f"{cls.__name__}: error decoding JSON payload on websocket "
                 f" connection recv. id={id}, payload={payload}"
             )
+
+
+class WebSocketController:
+    def __init__(self) -> None:
+        raise InstantiationNotAllowedError(self.__class__.__name__)
+
+    @staticmethod
+    async def announce(
+        *,
+        users: Iterable[UserIDSchema],
+        model: MessagePutAnnouncementSchema | MessageDeleteAnnouncementSchema,
+        from_user: UserIDSchema | None = None,
+    ):
+        """
+        Sends a JSON representation of the given model to users that are in the
+        websocket connection pool, except to optional `from_user`.
+
+        Receivers should check whether the message payload exists in their
+        store. If so, update its attributes. Otherwise, add as new.
+        """
+
+        for user in users:
+            if from_user and user.id == from_user.id:
+                continue
+            elif not WebSocketConnectionManager.is_connected(user):
+                continue
+            await WebSocketConnectionManager.send_to(user, model.model_dump_json())

@@ -16,6 +16,7 @@ from app.schemas import (
     ChatUserSchema,
     MessageCreateSchema,
     MessageFetchSchema,
+    MessagePutAnnouncementSchema,
     MessageReadSchema,
     MessageSendSchema,
 )
@@ -27,7 +28,7 @@ from app.services.exceptions import (
 from app.utils.exceptions import ClientNotConnectedError
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.types import IDType
-from app.utils.websockets import WebsocketConnectionManager
+from app.utils.websockets import WebSocketController
 
 chat_router = APIRouterWithRouteProtection(prefix="/chat", tags=["chat"])
 
@@ -112,6 +113,8 @@ async def send(
     messageSchema: MessageSendSchema,
     idSchema: UserIDDependency,
 ) -> MessageReadSchema:
+    newMessageSchema: MessageReadSchema
+
     try:
         newMessageSchema = await service.send_message(
             messageSchema=MessageCreateSchema(
@@ -121,23 +124,20 @@ async def send(
             )
         )
 
-        chatUserIds = await service.get_users(
+        chat_users = await service.get_users(
             chatIDSchema=ChatIDSchema(id=messageSchema.chat_id)
         )
 
-        for userIDSchema in chatUserIds:
-            if userIDSchema.id == idSchema.id:
-                continue
-            if not WebsocketConnectionManager.is_connected(userIDSchema):
-                continue
-
-            await WebsocketConnectionManager.send_to(
-                userIDSchema, newMessageSchema.model_dump_json()
-            )
-
-        return newMessageSchema
-
     except (ChatNotFoundError, UserNotFoundError) as error:
         raise HTTPException(status_code=400, detail=error.detail) from error
+
+    try:
+        await WebSocketController.announce(
+            users=chat_users,
+            model=MessagePutAnnouncementSchema(message=newMessageSchema),
+            from_user=idSchema,
+        )
     except ClientNotConnectedError:
-        raise
+        pass
+
+    return newMessageSchema

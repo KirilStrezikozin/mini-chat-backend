@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import StringConstraints, model_validator
 
@@ -33,7 +33,7 @@ class MessageReadSchema(MessageIDSchema, MessageTimestampSchema, MessageCreateSc
 
 
 class MessageDeleteSchema(MessageIDSchema):
-    pass
+    chat_id: IDType
 
 
 class MessageChangeContentSchema(MessageIDSchema, MessageContentSchema):
@@ -42,6 +42,16 @@ class MessageChangeContentSchema(MessageIDSchema, MessageContentSchema):
 
 class MessageEditSchema(MessageContentSchema, MessageIDSchema):
     pass
+
+
+class MessagePutAnnouncementSchema(Base):
+    announcement_type: Literal["message/put"] = "message/put"
+    message: MessageReadSchema
+
+
+class MessageDeleteAnnouncementSchema(Base):
+    announcement_type: Literal["message/delete"] = "message/delete"
+    message: MessageDeleteSchema
 
 
 class MessageFetchSchema(Base):
