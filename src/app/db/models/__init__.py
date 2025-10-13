@@ -8,8 +8,10 @@ __all__ = [
     "PrimaryKeyIDMixin",
     "TimestampMixin",
     "UserModel",
+    "AttachmentModel",
 ]
 
+from .attachment import AttachmentModel
 from .base import Base
 from .chat import ChatModel, ChatUserModel
 from .mappings import PrimaryKeyID, Timestamp

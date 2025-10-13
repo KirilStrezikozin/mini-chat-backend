@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.utils.types import IDType
 
+from .attachment import AttachmentModel
 from .base import Base
 from .mixins import PrimaryKeyIDMixin, TimestampMixin
 from .user import UserModel
@@ -29,4 +30,10 @@ class MessageModel(Base, PrimaryKeyIDMixin, TimestampMixin):
     sender: Mapped["UserModel"] = relationship(
         "UserModel",
         foreign_keys=[sender_id],
+    )
+
+    attachments: Mapped[list["AttachmentModel"]] = relationship(
+        "AttachmentModel",
+        back_populates="message",
+        cascade="all, delete-orphan",
     )

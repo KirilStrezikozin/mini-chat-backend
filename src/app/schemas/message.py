@@ -6,6 +6,7 @@ from pydantic import StringConstraints, model_validator
 from app.utils.types import IDType
 
 from . import Base, IDSchema
+from .attachment import AttachmentReadSchema
 
 
 class MessageIDSchema(IDSchema):
@@ -54,6 +55,11 @@ class MessageDeleteAnnouncementSchema(Base):
     message: MessageDeleteSchema
 
 
+class MessageAttachmentAnnouncementSchema(Base):
+    announcement_type: Literal["message/attachment"] = "message/attachment"
+    attachment: AttachmentReadSchema
+
+
 class MessageFetchSchema(Base):
     chat_id: IDType
     since: datetime | None = None
@@ -64,8 +70,7 @@ class MessageFetchSchema(Base):
     def check(self) -> Self:
         if not any(
             [
-                self.since and self.count,
-                self.until and self.count,
+                self.since or self.until,
                 self.since and self.until and not self.count,
             ]
         ):
