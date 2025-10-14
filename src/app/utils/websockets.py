@@ -1,9 +1,12 @@
 import json
+import logging
+from collections import defaultdict
 from collections.abc import Callable, Iterable
 
 from fastapi.websockets import WebSocket, WebSocketDisconnect
+from starlette.datastructures import Address
 
-from app.core.logger import logger
+from app.core.logger import root_logger
 from app.schemas import (
     MessageAttachmentAnnouncementSchema,
     MessageDeleteAnnouncementSchema,
@@ -11,105 +14,93 @@ from app.schemas import (
     UserIDSchema,
 )
 from app.utils.exceptions import (
-    ClientNotConnectedError,
     InstantiationNotAllowedError,
+    WebSocketNoClientError,
 )
 from app.utils.types import IDType
 
+logger = root_logger.getChild("utils.websockets")
 
-class WebSocketConnectionManager:
-    connections: dict[IDType, WebSocket] = {}
+
+class WebSocketManager:
+    users: dict[IDType, dict[Address, WebSocket]] = defaultdict(dict)
+    logger = logger.getChild("manager")
 
     def __init__(self) -> None:
         raise InstantiationNotAllowedError(self.__class__.__name__)
 
     @classmethod
-    def is_connected(cls, user: UserIDSchema) -> bool:
-        return user.id in cls.connections
+    def log_users(cls) -> None:
+        print(cls.logger.level)
+        if cls.logger.level <= logging.DEBUG:
+            for user_id, clients in cls.users.items():
+                cls.logger.debug(f"{user_id} - user in pool, {len(clients)} clients")
 
     @classmethod
-    async def send_to(cls, user: UserIDSchema, data: str) -> None:
-        try:
-            await cls.connections[user.id].send_text(data)
+    async def accept_client(cls, user: UserIDSchema, websocket: WebSocket) -> Address:
+        client = websocket.client
+        if not client:
+            raise WebSocketNoClientError(user=user)
 
-            logger.info(
-                f"{cls.__name__}: {data} sent to {user.id}",
-            )
+        await websocket.accept()
+        cls.users[user.id][client] = websocket
 
-        except KeyError as error:
-            raise ClientNotConnectedError(str(user.id)) from error
+        cls.logger.debug(f"{user.id} - {client} - accepted")
+        cls.log_users()
+
+        return client
 
     @classmethod
-    async def handle_connection(
+    def close_client(cls, user: UserIDSchema, client: Address) -> None:
+        cls.users[user.id].pop(client)
+
+        cls.logger.debug(f"{user.id} - {client} - client closed")
+        cls.log_users()
+
+    @classmethod
+    async def close_user(cls, user: UserIDSchema) -> None:
+        clients = cls.users.pop(user.id)
+        for websocket in clients.values():
+            await websocket.close(1000)
+
+        cls.logger.debug(f"{user.id} - closed all clients")
+        cls.log_users()
+
+    @classmethod
+    async def send_to_user(cls, user: UserIDSchema, data: str) -> None:
+        clients = cls.users[user.id]
+        for websocket in clients.values():
+            await websocket.send_text(data)
+
+        cls.logger.debug(f"{user.id} - broadcasted {data} to {len(clients)} clients")
+
+    @classmethod
+    async def handle_client(
         cls,
         *,
         user: UserIDSchema,
         websocket: WebSocket,
         recv_callback: Callable[[object], None] | None = None,
     ) -> None:
-        if cls.is_connected(user):
-            logger.info(
-                f"{cls.__name__}: connection with client {user.id} already established",
-            )
-
-            # We could either close the connection (the client will likely keep
-            # retrying), or drop the old and switch to this one.
-            # await cls.connections[user.id].close(1000)
-
-            # raise WebSocketClientAlreadyConnected(str(user.id))
-            # await websocket.close(1000)
-            return
-
-        await websocket.accept()
-        cls.connections[user.id] = websocket
-
-        logger.info(
-            f"{cls.__name__}: connection with client {user.id} accepted",
-        )
-        logger.info(
-            f"{cls.__name__}: connections in pool: {len(cls.connections)}",
-        )
+        client = await cls.accept_client(user, websocket)
 
         try:
             while True:
-                await cls.__handle_recv(websocket, recv_callback)
+                payload = await websocket.receive_text()
+
+                try:
+                    data = json.loads(payload)
+                    if recv_callback:
+                        recv_callback(data)
+                except json.JSONDecodeError:
+                    cls.logger.error(f"{user.id} - {client} - error decoding {payload}")
 
         except WebSocketDisconnect:
-            del cls.connections[user.id]
-
-            logger.info(
-                f"{cls.__name__}: connection with client {user.id} closed",
-            )
-            logger.info(
-                f"{cls.__name__}: connections left in pool: {len(cls.connections)}",
-            )
+            cls.close_client(user, client)
 
     @classmethod
-    async def __handle_recv(
-        cls,
-        websocket: WebSocket,
-        recv_callback: Callable[[object], None] | None = None,
-    ) -> None:
-        payload = await websocket.receive_text()
-
-        try:
-            data = json.loads(payload)
-            if recv_callback:
-                recv_callback(data)
-
-        except json.JSONDecodeError:
-            logger.error(
-                f"{cls.__name__}: error decoding JSON payload on websocket "
-                f" connection recv. id={id}, payload={payload}"
-            )
-
-
-class WebSocketController:
-    def __init__(self) -> None:
-        raise InstantiationNotAllowedError(self.__class__.__name__)
-
-    @staticmethod
     async def announce(
+        cls,
         *,
         users: Iterable[UserIDSchema],
         model: MessagePutAnnouncementSchema
@@ -125,9 +116,8 @@ class WebSocketController:
         store. If so, update its attributes. Otherwise, add as new.
         """
 
+        data = model.model_dump_json()
         for user in users:
-            if from_user and user.id == from_user.id:
+            if user.id not in cls.users:
                 continue
-            elif not WebSocketConnectionManager.is_connected(user):
-                continue
-            await WebSocketConnectionManager.send_to(user, model.model_dump_json())
+            await cls.send_to_user(user, data)

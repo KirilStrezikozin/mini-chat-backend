@@ -20,10 +20,9 @@ from app.schemas import (
     PresignedAttachmentReadSchema,
 )
 from app.services.exceptions import MessageNotFoundError
-from app.utils.exceptions import ClientNotConnectedError
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.types import IDType
-from app.utils.websockets import WebSocketController
+from app.utils.websockets import WebSocketManager
 
 message_router = APIRouterWithRouteProtection(prefix="/message", tags=["message"])
 
@@ -43,7 +42,7 @@ async def edit_message(
             chatIDSchema=ChatIDSchema(id=message.chat_id)
         )
 
-        await WebSocketController.announce(
+        await WebSocketManager.announce(
             users=chat_users,
             model=MessagePutAnnouncementSchema(
                 message=MessageReadSchema(
@@ -59,8 +58,6 @@ async def edit_message(
 
     except MessageNotFoundError as error:
         raise HTTPException(status_code=404, detail=error.detail) from error
-    except ClientNotConnectedError:
-        pass
 
 
 @message_router.post("/delete", protected=True)
@@ -78,7 +75,7 @@ async def delete_message(
             chatIDSchema=ChatIDSchema(id=message.chat_id)
         )
 
-        await WebSocketController.announce(
+        await WebSocketManager.announce(
             users=chat_users,
             model=MessageDeleteAnnouncementSchema(message=message_schema),
             from_user=user_schema,
@@ -86,8 +83,6 @@ async def delete_message(
 
     except MessageNotFoundError as error:
         raise HTTPException(status_code=404, detail=error.detail) from error
-    except ClientNotConnectedError:
-        pass
 
 
 @message_router.post("/attachment", protected=True)
@@ -115,7 +110,7 @@ async def add_and_presign_attachment(
             ExpiresIn=config.s3.PRESIGNED_URL_EXPIRES_IN,
         )
 
-        await WebSocketController.announce(
+        await WebSocketManager.announce(
             users=users,
             model=MessageAttachmentAnnouncementSchema(attachment=attachment),
             from_user=user_schema,

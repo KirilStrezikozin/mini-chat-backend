@@ -28,10 +28,9 @@ from app.services.exceptions import (
     InalidChatUserID,
     UserNotFoundError,
 )
-from app.utils.exceptions import ClientNotConnectedError
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.types import IDType
-from app.utils.websockets import WebSocketController
+from app.utils.websockets import WebSocketManager
 
 chat_router = APIRouterWithRouteProtection(prefix="/chat", tags=["chat"])
 
@@ -134,14 +133,11 @@ async def send(
     except (ChatNotFoundError, UserNotFoundError) as error:
         raise HTTPException(status_code=400, detail=error.detail) from error
 
-    try:
-        await WebSocketController.announce(
-            users=chat_users,
-            model=MessagePutAnnouncementSchema(message=newMessageSchema),
-            from_user=idSchema,
-        )
-    except ClientNotConnectedError:
-        pass
+    await WebSocketManager.announce(
+        users=chat_users,
+        model=MessagePutAnnouncementSchema(message=newMessageSchema),
+        from_user=idSchema,
+    )
 
     return newMessageSchema
 

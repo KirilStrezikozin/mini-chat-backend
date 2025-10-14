@@ -1,3 +1,11 @@
+from collections.abc import Mapping
+
+from starlette.datastructures import Address
+from starlette.exceptions import HTTPException
+
+from app.schemas import UserIDSchema
+
+
 class ContextRequiredToAccessAttributeError(PermissionError):
     def __init__(self, property_name: str, *args) -> None:
         super().__init__(
@@ -6,8 +14,9 @@ class ContextRequiredToAccessAttributeError(PermissionError):
         )
 
 
-class TokenValidationError(BaseException):
-    pass
+class TokenValidationError(HTTPException):
+    def __init__(self, *, headers: Mapping[str, str] | None = None) -> None:
+        super().__init__(401, "Unauthorized", headers)
 
 
 class PasswordVerificationError(BaseException):
@@ -20,13 +29,32 @@ class InstantiationNotAllowedError(BaseException):
         super().__init__(f"Cannot instantiate {name}")
 
 
-class ClientNotConnectedError(BaseException):
-    def __init__(self, id: str) -> None:
-        super().__init__(f"WebSocket client with id={id} is not in the connection pool")
+class WebSocketUserNotConnectedError(HTTPException):
+    def __init__(
+        self, *, user: UserIDSchema, headers: Mapping[str, str] | None = None
+    ) -> None:
+        super().__init__(403, f"{user.id} is not in th connection pool", headers)
 
 
-class WebSocketClientAlreadyConnected(BaseException):
-    def __init__(self, id: str) -> None:
+class WebSocketClientAlreadyConnected(HTTPException):
+    def __init__(
+        self,
+        *,
+        user: UserIDSchema,
+        client: Address,
+        headers: Mapping[str, str] | None = None,
+    ) -> None:
         super().__init__(
-            f"WebSocket client with id={id} is already in the connection pool"
+            403,
+            f"{user.id}, client {client} is already in the connection pool",
+            headers,
+        )
+
+
+class WebSocketNoClientError(HTTPException):
+    def __init__(
+        self, *, user: UserIDSchema, headers: Mapping[str, str] | None = None
+    ) -> None:
+        super().__init__(
+            403, f"{user.id} no client associated with websocket connection", headers
         )

@@ -7,7 +7,6 @@ from app.api.deps import (
     UserIDDependency,
     WebSocketCookieManagerDependency,
 )
-from app.core.logger import logger
 from app.schemas import (
     UserIDSchema,
     UserLoginSchema,
@@ -23,12 +22,10 @@ from app.services.exceptions import (
 )
 from app.utils.exceptions import (
     PasswordVerificationError,
-    TokenValidationError,
-    WebSocketClientAlreadyConnected,
 )
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.security import JWTManager
-from app.utils.websockets import WebSocketConnectionManager
+from app.utils.websockets import WebSocketManager
 
 auth_router = APIRouterWithRouteProtection(prefix="/auth", tags=["auth"])
 
@@ -102,35 +99,11 @@ async def token() -> None:
 async def websocket_endpoint(
     cookie_manager: WebSocketCookieManagerDependency, ws: WebSocket
 ):
-    try:
-        tokenPayload = cookie_manager.validate_token_cookie()
-    except TokenValidationError:
-        await ws.close(code=1000)
-        return
+    tokenPayload = cookie_manager.validate_token_cookie()
 
-    def recv_callback(payload: object):
-        logger.info(
-            f"{WebSocketConnectionManager.__name__}: client",
-            tokenPayload.id,
-            "received data:",
-            payload,
-        )
-
-    try:
-        await WebSocketConnectionManager.handle_connection(
-            user=UserIDSchema(id=tokenPayload.id),
-            websocket=ws,
-            recv_callback=recv_callback,
-        )
-    except WebSocketClientAlreadyConnected:
-        logger.info(
-            f"{WebSocketConnectionManager.__name__}: client",
-            tokenPayload.id,
-            "already connected",
-        )
-
-        await ws.close(code=1000)
-        return
+    await WebSocketManager.handle_client(
+        user=UserIDSchema(id=tokenPayload.id), websocket=ws
+    )
 
 
 @auth_router.get("/ws/token", protected=True)
