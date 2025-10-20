@@ -1,7 +1,6 @@
-from collections.abc import Generator, Iterable
-
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import ChatNotFoundError, UserNotFoundError
 from app.db.repositories import ChatRepository
 from app.schemas import (
     ChatIDSchema,
@@ -16,28 +15,25 @@ from app.schemas import (
 )
 
 from .base import BaseService
-from .exceptions import ChatNotFoundError, InalidChatUserID, UserNotFoundError
 
 
 class ChatService(BaseService):
-    async def get_chats(self, *, userIDSchema: UserIDSchema) -> Iterable[ChatSchema]:
+    async def get_chats(self, *, userIDSchema: UserIDSchema) -> list[ChatSchema]:
         async with self.uow as uow:
             resource = await uow.userRepository.get(userIDSchema)
             if not resource:
                 raise UserNotFoundError
 
-            return map(ChatSchema.model_validate, resource.chats)
+            return [ChatSchema.model_validate(chat) for chat in resource.chats]
 
     async def get_chats_info(
         self, *, userIDSchema: UserIDSchema
-    ) -> Iterable[ChatInfoSchema]:
+    ) -> list[ChatInfoSchema]:
         async with self.uow as uow:
-            resource = await uow.chatUserRepository.get_chats_info(userIDSchema)
-            return map(ChatInfoSchema.model_validate, resource)
+            resources = await uow.chatUserRepository.get_chats_info(userIDSchema)
+            return [ChatInfoSchema.model_validate(resource) for resource in resources]
 
-    async def get_users(
-        self, *, chatIDSchema: ChatIDSchema
-    ) -> Generator[UserIDSchema, None, None]:
+    async def get_users(self, *, chatIDSchema: ChatIDSchema) -> list[UserIDSchema]:
         async with self.uow as uow:
             resource = await uow.chatRepository.get(
                 chatIDSchema,
@@ -47,13 +43,13 @@ class ChatService(BaseService):
             if not resource:
                 raise ChatNotFoundError
 
-            return (UserIDSchema(id=user_model.id) for user_model in resource.users)
+            return [UserIDSchema(id=user_model.id) for user_model in resource.users]
 
     async def get_or_create_chat(
         self, *, userIDSchema: UserIDSchema, retrieveSchema: ChatRetrieveSchema
     ) -> ChatSchema:
         if userIDSchema.id == retrieveSchema.with_user_id:
-            raise InalidChatUserID(detail="Cannot create a chat with yourself")
+            raise ChatNotFoundError
 
         async with self.uow as uow:
             chatUserResource = await uow.chatUserRepository.get_chat(
@@ -122,7 +118,7 @@ class ChatService(BaseService):
                 UserIDSchema(id=messageSchema.sender_id)
             )
             if not userResource:
-                raise UserNotFoundError(detail="Sender not found")
+                raise UserNotFoundError
 
             resource = await uow.messageRepository.add_one(messageSchema)
 
@@ -131,7 +127,7 @@ class ChatService(BaseService):
 
     async def get_messages(
         self, *, messageFetchSchema: MessageFetchSchema
-    ) -> Generator[MessageReadSchema, None, None]:
+    ) -> list[MessageReadSchema]:
         async with self.uow as uow:
             chatResource = await uow.chatRepository.get(
                 ChatIDSchema(id=messageFetchSchema.chat_id),
@@ -146,4 +142,4 @@ class ChatService(BaseService):
                 count=messageFetchSchema.count,
             )
 
-            return (MessageReadSchema.model_validate(model) for model in resource)
+            return [MessageReadSchema.model_validate(model) for model in resource]

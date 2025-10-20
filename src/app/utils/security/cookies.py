@@ -1,8 +1,8 @@
 from fastapi import Response, WebSocket
 
 from app.core.config import Config
+from app.core.exceptions import TokenValidationError
 from app.schemas import TokenPayload, TokenSchema, TokenType, WebSocketTokenSchema
-from app.utils.exceptions import TokenValidationError
 
 from .jwt import JWTManager
 

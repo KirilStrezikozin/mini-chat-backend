@@ -1,9 +1,7 @@
-from collections.abc import Generator
-
+from app.core.exceptions import AttachmentNotFoundError, ChatNotFoundError
 from app.schemas import AttachmentIDSchema, AttachmentReadSchema, ChatIDSchema
 
 from .base import BaseService
-from .exceptions import AttachmentNotFoundError, ChatNotFoundError
 
 
 class AttachmentService(BaseService):
@@ -18,7 +16,7 @@ class AttachmentService(BaseService):
 
     async def get_all_in_chat(
         self, *, chat_schema: ChatIDSchema
-    ) -> Generator[AttachmentReadSchema, None, None]:
+    ) -> list[AttachmentReadSchema]:
         async with self.uow as uow:
             if not await uow.chatRepository.get(chat_schema):
                 raise ChatNotFoundError
@@ -27,4 +25,4 @@ class AttachmentService(BaseService):
                 chat_schema=chat_schema
             )
 
-            return (AttachmentReadSchema.model_validate(v) for v in resources)
+            return [AttachmentReadSchema.model_validate(v) for v in resources]

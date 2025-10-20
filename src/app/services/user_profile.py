@@ -1,5 +1,6 @@
 from sqlalchemy.exc import IntegrityError
 
+from app.core.exceptions import UserNameAlreadyRegistered, UserNotFoundError
 from app.schemas import (
     UserFullNameSchema,
     UserIDSchema,
@@ -9,7 +10,6 @@ from app.schemas import (
 )
 
 from .base import BaseService
-from .exceptions import UserNameAlreadyRegistered, UserNotFoundError
 
 
 class UserProfileService(BaseService):

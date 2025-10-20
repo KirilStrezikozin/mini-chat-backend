@@ -1,5 +1,12 @@
 from typing import Any
 
+from app.core.exceptions import (
+    LoginError,
+    PasswordVerificationError,
+    UserEmailAlreadyRegistered,
+    UserNameAlreadyRegistered,
+    UserNotFoundError,
+)
 from app.db.repositories import UserRepository
 from app.schemas import (
     TokenSchema,
@@ -13,13 +20,6 @@ from app.schemas import (
 from app.utils.security import JWTManager, PasswordManager
 
 from .base import BaseService
-from .exceptions import (
-    UserEmailAlreadyRegistered,
-    UserEmailNotFoundError,
-    UserNameAlreadyRegistered,
-    UserNameNotFoundError,
-    UserNotFoundError,
-)
 
 
 class UserAuthService(BaseService):
@@ -34,7 +34,7 @@ class UserAuthService(BaseService):
                 )
 
                 if not resource:
-                    raise UserNameNotFoundError
+                    raise LoginError
 
             else:
                 resource = await uow.userRepository.filter_one_by(
@@ -42,11 +42,14 @@ class UserAuthService(BaseService):
                 )
 
                 if not resource:
-                    raise UserEmailNotFoundError
+                    raise LoginError
 
             user = UserReadSchema.model_validate(resource)
 
-        PasswordManager.verify_password(loginSchema.password, user.password_hash)
+        try:
+            PasswordManager.verify_password(loginSchema.password, user.password_hash)
+        except PasswordVerificationError as error:
+            raise LoginError from error
 
         return JWTManager.create_token_schema(self.config, UserIDSchema(id=user.id))
 

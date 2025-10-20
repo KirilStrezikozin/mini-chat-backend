@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
 from app.api.deps import (
@@ -9,7 +8,6 @@ from app.api.deps import (
 from app.schemas import (
     AttachmentIDSchema,
 )
-from app.services.exceptions import AttachmentNotFoundError
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.types import IDType
 
@@ -25,21 +23,17 @@ async def get(
     attachment_service: AttachmentServiceDependency,
     s3: S3ClientDependency,
 ):
-    try:
-        attachment = await attachment_service.get(
-            attachment_schema=AttachmentIDSchema(id=id)
-        )
+    attachment = await attachment_service.get(
+        attachment_schema=AttachmentIDSchema(id=id)
+    )
 
-        url = s3.generate_presigned_url(
-            ClientMethod="get_object",
-            Params={
-                "Bucket": config.s3.BUCKET_NAME,
-                "Key": str(attachment.id),
-            },
-            ExpiresIn=config.s3.PRESIGNED_URL_EXPIRES_IN,
-        )
+    url = s3.generate_presigned_url(
+        ClientMethod="get_object",
+        Params={
+            "Bucket": config.s3.BUCKET_NAME,
+            "Key": str(attachment.id),
+        },
+        ExpiresIn=config.s3.PRESIGNED_URL_EXPIRES_IN,
+    )
 
-        return RedirectResponse(url)
-
-    except AttachmentNotFoundError as error:
-        raise HTTPException(status_code=404, detail=error.detail) from error
+    return RedirectResponse(url)

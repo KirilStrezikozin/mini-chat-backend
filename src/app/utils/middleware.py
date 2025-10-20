@@ -1,10 +1,10 @@
-from fastapi import Request, Response
+from fastapi import Request, Response, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
 from app.core.config import Config
+from app.core.exceptions import TokenValidationError
 from app.schemas import TokenPayload, TokenSchema, TokenType, UserIDSchema
-from app.utils.exceptions import TokenValidationError
 from app.utils.security import JWTManager, ResponseCookieManager
 
 
@@ -58,7 +58,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             token_payload = TokenPayload(id=idSchema.id, type=TokenType.access_token)
 
         if not token_payload:
-            return Response("Unauthorized", status_code=401)
+            return Response("Unauthorized", status_code=status.HTTP_401_UNAUTHORIZED)
 
         JWTManager.set_request_token_payload(request, token_payload)
         response = await call_next(request)

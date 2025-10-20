@@ -1,7 +1,6 @@
-from collections.abc import Generator
-
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import MessageNotFoundError
 from app.db.repositories import ChatRepository, MessageRepository
 from app.schemas import (
     AttachmentCreateSchema,
@@ -13,7 +12,6 @@ from app.schemas import (
 )
 
 from .base import BaseService
-from .exceptions import MessageNotFoundError
 
 
 class MessageService(BaseService):
@@ -64,7 +62,7 @@ class MessageService(BaseService):
 
     async def get_attachments(
         self, *, message_schema: MessageIDSchema
-    ) -> Generator[AttachmentReadSchema, None, None]:
+    ) -> list[AttachmentReadSchema]:
         async with self.uow as uow:
             resource = await uow.messageRepository.get(
                 message_schema,
@@ -73,14 +71,14 @@ class MessageService(BaseService):
             if not resource:
                 raise MessageNotFoundError
 
-            return (
+            return [
                 AttachmentReadSchema.model_validate(model)
                 for model in resource.attachments
-            )
+            ]
 
     async def get_users_for_message_in_chat(
         self, *, message_schema: MessageIDSchema
-    ) -> Generator[UserReadSchema, None, None]:
+    ) -> list[UserReadSchema]:
         async with self.uow as uow:
             resource = await uow.messageRepository.get(
                 message_schema,
@@ -95,6 +93,6 @@ class MessageService(BaseService):
             if not resource:
                 raise MessageNotFoundError
 
-            return (
+            return [
                 UserReadSchema.model_validate(model) for model in resource.chat.users
-            )
+            ]

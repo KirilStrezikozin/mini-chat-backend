@@ -6,16 +6,16 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 
 from app.core.config import Config
+from app.core.exceptions import (
+    InstantiationNotAllowedError,
+    TokenValidationError,
+)
 from app.schemas import (
     TokenPayload,
     TokenSchema,
     TokenType,
     UserIDSchema,
     WebSocketTokenSchema,
-)
-from app.utils.exceptions import (
-    InstantiationNotAllowedError,
-    TokenValidationError,
 )
 
 

@@ -1,4 +1,4 @@
-from fastapi import HTTPException, WebSocket
+from fastapi import WebSocket
 
 from app.api.deps import (
     ConfigDependency,
@@ -13,16 +13,6 @@ from app.schemas import (
     UserPasswordSchema,
     UserRegisterSchema,
 )
-from app.services.exceptions import (
-    UserEmailAlreadyRegistered,
-    UserEmailNotFoundError,
-    UserNameAlreadyRegistered,
-    UserNameNotFoundError,
-    UserNotFoundError,
-)
-from app.utils.exceptions import (
-    PasswordVerificationError,
-)
 from app.utils.router import APIRouterWithRouteProtection
 from app.utils.security import JWTManager
 from app.utils.websockets import WebSocketManager
@@ -36,12 +26,8 @@ async def register(
     service: UserAuthServiceDependency,
     cookie_manager: ResponseCookieManagerDependency,
 ) -> None:
-    try:
-        tokenSchema = await service.register(registerSchema=payload)
-        cookie_manager.set_token_cookie(tokenSchema)
-
-    except (UserEmailAlreadyRegistered, UserNameAlreadyRegistered) as error:
-        raise HTTPException(status_code=409, detail=error.detail) from error
+    tokenSchema = await service.register(registerSchema=payload)
+    cookie_manager.set_token_cookie(tokenSchema)
 
 
 @auth_router.post("/login")
@@ -50,18 +36,8 @@ async def login(
     service: UserAuthServiceDependency,
     cookie_manager: ResponseCookieManagerDependency,
 ) -> None:
-    try:
-        tokenSchema = await service.login(loginSchema=payload)
-        cookie_manager.set_token_cookie(tokenSchema)
-
-    except (
-        UserNameNotFoundError,
-        UserEmailNotFoundError,
-        PasswordVerificationError,
-    ) as error:
-        raise HTTPException(
-            status_code=401, detail="Username, email, or password is incorrect"
-        ) from error
+    tokenSchema = await service.login(loginSchema=payload)
+    cookie_manager.set_token_cookie(tokenSchema)
 
 
 @auth_router.post("/logout", protected=True)
@@ -78,14 +54,8 @@ async def delete_account(
     passwordSchema: UserPasswordSchema,
     idSchema: UserIDDependency,
 ) -> None:
-    try:
-        await service.delete_account(idSchema=idSchema, passwordSchema=passwordSchema)
-        cookie_manager.unset_token_cookie()
-
-    except UserNotFoundError as error:
-        raise HTTPException(status_code=404, detail=error.detail) from error
-    except PasswordVerificationError as error:
-        raise HTTPException(status_code=404, detail="Incorrect password") from error
+    await service.delete_account(idSchema=idSchema, passwordSchema=passwordSchema)
+    cookie_manager.unset_token_cookie()
 
 
 @auth_router.get("/token", protected=True)
@@ -100,7 +70,6 @@ async def websocket_endpoint(
     cookie_manager: WebSocketCookieManagerDependency, ws: WebSocket
 ):
     tokenPayload = cookie_manager.validate_token_cookie()
-
     await WebSocketManager.handle_client(
         user=UserIDSchema(id=tokenPayload.id), websocket=ws
     )

@@ -1,6 +1,6 @@
 import bcrypt
 
-from app.utils.exceptions import (
+from app.core.exceptions import (
     InstantiationNotAllowedError,
     PasswordVerificationError,
 )

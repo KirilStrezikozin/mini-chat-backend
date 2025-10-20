@@ -1,5 +1,3 @@
-from collections.abc import Iterable
-
 from sqlalchemy import Row
 
 from app.db.models.mappings import PrimaryKeyID
@@ -17,12 +15,12 @@ class ChatDiscoveryService(BaseService):
         by: ChatSearchByType,
         skip_id: UserIDSchema,
         count: int | None = None,
-    ) -> Iterable[ChatSearchResultSchema]:
+    ) -> list[ChatSearchResultSchema]:
         async with self.uow as uow:
             model = UserRepository.model_cls
             filter_by = model.fullname if by.value == "fullname" else model.username
 
-            res = await uow.userRepository.get_column_scalars(
+            resource = await uow.userRepository.get_column_scalars(
                 model.id,
                 (model.fullname, model.username),
                 filter_by,
@@ -39,4 +37,4 @@ class ChatDiscoveryService(BaseService):
                     username=resource[2],
                 )
 
-            return map(transform, res)
+            return [transform(v) for v in resource]

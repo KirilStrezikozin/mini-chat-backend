@@ -3,19 +3,20 @@ import logging
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 
+from fastapi import status
 from fastapi.websockets import WebSocket, WebSocketDisconnect
 from starlette.datastructures import Address
 
+from app.core.exceptions import (
+    InstantiationNotAllowedError,
+    WebSocketNoClientError,
+)
 from app.core.logger import root_logger
 from app.schemas import (
     MessageAttachmentAnnouncementSchema,
     MessageDeleteAnnouncementSchema,
     MessagePutAnnouncementSchema,
     UserIDSchema,
-)
-from app.utils.exceptions import (
-    InstantiationNotAllowedError,
-    WebSocketNoClientError,
 )
 from app.utils.types import IDType
 
@@ -40,7 +41,7 @@ class WebSocketManager:
     async def accept_client(cls, user: UserIDSchema, websocket: WebSocket) -> Address:
         client = websocket.client
         if not client:
-            raise WebSocketNoClientError(user=user)
+            raise WebSocketNoClientError
 
         await websocket.accept()
         cls.users[user.id][client] = websocket
@@ -61,7 +62,7 @@ class WebSocketManager:
     async def close_user(cls, user: UserIDSchema) -> None:
         clients = cls.users.pop(user.id)
         for websocket in clients.values():
-            await websocket.close(1000)
+            await websocket.close(status.WS_1000_NORMAL_CLOSURE)
 
         cls.logger.debug(f"{user.id} - closed all clients")
         cls.log_users()
