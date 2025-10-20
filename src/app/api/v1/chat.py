@@ -109,7 +109,6 @@ async def send(
     await WebSocketManager.announce(
         users=chat_users,
         model=MessagePutAnnouncementSchema(message=newMessageSchema),
-        from_user=idSchema,
     )
 
     return newMessageSchema

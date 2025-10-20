@@ -3,7 +3,6 @@ from app.api.deps import (
     ConfigDependency,
     MessageServiceDependency,
     S3ClientDependency,
-    UserIDDependency,
 )
 from app.schemas import (
     AttachmentCreateSchema,
@@ -30,7 +29,6 @@ async def edit_message(
     message_service: MessageServiceDependency,
     chat_service: ChatServiceDependency,
     message_schema: MessageEditSchema,
-    user_schema: UserIDDependency,
 ) -> None:
     message = await message_service.get(message_schema=message_schema)
     await message_service.edit(message_schema=message_schema)
@@ -50,7 +48,6 @@ async def edit_message(
                 timestamp=message.timestamp,
             )
         ),
-        from_user=user_schema,
     )
 
 
@@ -59,7 +56,6 @@ async def delete_message(
     message_service: MessageServiceDependency,
     chat_service: ChatServiceDependency,
     message_schema: MessageDeleteSchema,
-    user_schema: UserIDDependency,
 ) -> None:
     message = await message_service.get(message_schema=message_schema)
     await message_service.delete(message_schema=message_schema)
@@ -71,7 +67,6 @@ async def delete_message(
     await WebSocketManager.announce(
         users=chat_users,
         model=MessageDeleteAnnouncementSchema(message=message_schema),
-        from_user=user_schema,
     )
 
 
@@ -79,7 +74,6 @@ async def delete_message(
 async def add_and_presign_attachment(
     config: ConfigDependency,
     schema: AttachmentCreateSchema,
-    user_schema: UserIDDependency,
     message_service: MessageServiceDependency,
     s3: S3ClientDependency,
 ) -> PresignedAttachmentReadSchema:
@@ -102,7 +96,6 @@ async def add_and_presign_attachment(
     await WebSocketManager.announce(
         users=users,
         model=MessageAttachmentAnnouncementSchema(attachment=attachment),
-        from_user=user_schema,
     )
 
     return PresignedAttachmentReadSchema(

@@ -107,11 +107,10 @@ class WebSocketManager:
         model: MessagePutAnnouncementSchema
         | MessageDeleteAnnouncementSchema
         | MessageAttachmentAnnouncementSchema,
-        from_user: UserIDSchema | None = None,
     ):
         """
         Sends a JSON representation of the given model to users that are in the
-        websocket connection pool, except to optional `from_user`.
+        websocket connection pool.
 
         Receivers should check whether the message payload exists in their
         store. If so, update its attributes. Otherwise, add as new.
