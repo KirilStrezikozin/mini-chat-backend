@@ -2,7 +2,7 @@ from fastapi import WebSocket
 
 from app.api.deps import (
     ConfigDependency,
-    ResponseCookieManagerDependency,
+    HTTPResponseCookieManagerDependency,
     UserAuthServiceDependency,
     UserIDDependency,
     WebSocketCookieManagerDependency,
@@ -24,7 +24,7 @@ auth_router = APIRouterWithRouteProtection(prefix="/auth", tags=["auth"])
 async def register(
     payload: UserRegisterSchema,
     service: UserAuthServiceDependency,
-    cookie_manager: ResponseCookieManagerDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
 ) -> None:
     tokenSchema = await service.register(registerSchema=payload)
     cookie_manager.set_token_cookie(tokenSchema)
@@ -34,7 +34,7 @@ async def register(
 async def login(
     payload: UserLoginSchema,
     service: UserAuthServiceDependency,
-    cookie_manager: ResponseCookieManagerDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
 ) -> None:
     tokenSchema = await service.login(loginSchema=payload)
     cookie_manager.set_token_cookie(tokenSchema)
@@ -42,7 +42,7 @@ async def login(
 
 @auth_router.post("/logout", protected=True)
 async def logout(
-    cookie_manager: ResponseCookieManagerDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
 ) -> None:
     cookie_manager.unset_token_cookie()
 
@@ -50,7 +50,7 @@ async def logout(
 @auth_router.post("/delete-account", protected=True)
 async def delete_account(
     service: UserAuthServiceDependency,
-    cookie_manager: ResponseCookieManagerDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
     passwordSchema: UserPasswordSchema,
     idSchema: UserIDDependency,
 ) -> None:
@@ -78,7 +78,7 @@ async def websocket_endpoint(
 @auth_router.get("/ws/token", protected=True)
 async def websocket_token(
     config: ConfigDependency,
-    cookie_manager: ResponseCookieManagerDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
     idSchema: UserIDDependency,
 ) -> None:
     tokenSchema = JWTManager.create_ws_token_schema(config, idSchema)

@@ -19,7 +19,7 @@ class WebSocketCookieManager:
         return JWTManager.validate_token(self.config, token, TokenType.ws_access_token)
 
 
-class ResponseCookieManager:
+class HTTPResponseCookieManager:
     def __init__(self, config: Config, response: Response) -> None:
         self.config = config
         self.response = response

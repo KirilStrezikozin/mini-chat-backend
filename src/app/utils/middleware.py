@@ -5,7 +5,7 @@ from starlette.types import ASGIApp
 from app.core.config import Config
 from app.core.exceptions import TokenValidationError
 from app.schemas import TokenPayload, TokenSchema, TokenType, UserIDSchema
-from app.utils.security import JWTManager, ResponseCookieManager
+from app.utils.security import HTTPResponseCookieManager, JWTManager
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
@@ -66,7 +66,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         if refresh:
             # If tokens were refreshed, update cookies.
             assert refresh_schema
-            cookie_manager = ResponseCookieManager(self.config, response)
+            cookie_manager = HTTPResponseCookieManager(self.config, response)
             cookie_manager.set_token_cookie(refresh_schema)
 
         return response

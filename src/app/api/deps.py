@@ -13,7 +13,11 @@ from app.services import (
     UserAuthService,
     UserProfileService,
 )
-from app.utils.security import JWTManager, ResponseCookieManager, WebSocketCookieManager
+from app.utils.security import (
+    HTTPResponseCookieManager,
+    JWTManager,
+    WebSocketCookieManager,
+)
 from app.utils.uow import AsyncUnitOfWork
 
 
@@ -109,14 +113,14 @@ def get_user_id(tokenPayload: RequestTokenPayloadDependency) -> UserIDSchema:
 UserIDDependency = Annotated[UserIDSchema, Depends(get_user_id)]
 
 
-def get_cookie_manager(
+def get_http_response_cookie_manager(
     response: Response, config: ConfigDependency
-) -> ResponseCookieManager:
-    return ResponseCookieManager(config, response)
+) -> HTTPResponseCookieManager:
+    return HTTPResponseCookieManager(config, response)
 
 
-ResponseCookieManagerDependency = Annotated[
-    ResponseCookieManager, Depends(get_cookie_manager)
+HTTPResponseCookieManagerDependency = Annotated[
+    HTTPResponseCookieManager, Depends(get_http_response_cookie_manager)
 ]
 
 
