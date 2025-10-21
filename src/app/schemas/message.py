@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Annotated, Literal, Self
 
@@ -22,10 +23,11 @@ class MessageTimestampSchema(Base):
 
 
 class MessageSendSchema(MessageContentSchema):
-    chat_id: IDType
+    pass
 
 
 class MessageCreateSchema(MessageSendSchema):
+    chat_id: IDType
     sender_id: IDType
 
 
@@ -34,14 +36,10 @@ class MessageReadSchema(MessageIDSchema, MessageTimestampSchema, MessageCreateSc
 
 
 class MessageDeleteSchema(MessageIDSchema):
-    chat_id: IDType
-
-
-class MessageChangeContentSchema(MessageIDSchema, MessageContentSchema):
     pass
 
 
-class MessageEditSchema(MessageContentSchema, MessageIDSchema):
+class MessageEditSchema(MessageIDSchema, MessageContentSchema):
     pass
 
 
@@ -52,12 +50,12 @@ class MessagePutAnnouncementSchema(Base):
 
 class MessageDeleteAnnouncementSchema(Base):
     announcement_type: Literal["message/delete"] = "message/delete"
-    message: MessageDeleteSchema
+    message: MessageReadSchema
 
 
-class MessageAttachmentAnnouncementSchema(Base):
-    announcement_type: Literal["message/attachment"] = "message/attachment"
-    attachment: AttachmentReadSchema
+class MessageAttachmentsAnnouncementSchema(Base):
+    announcement_type: Literal["message/attachments"] = "message/attachments"
+    attachments: Sequence[AttachmentReadSchema]
 
 
 class MessageFetchSchema(Base):

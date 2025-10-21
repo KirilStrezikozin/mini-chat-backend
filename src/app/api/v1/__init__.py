@@ -1,20 +1,22 @@
-from app.utils.router import APIRouterWithRouteProtection
+from fastapi import APIRouter
 
-from .attachment import attachment_router
-from .auth import auth_router
-from .chat import chat_router
-from .health import health_router
-from .message import message_router
-from .user import user_router
+from . import attachments, auth, chats, health, messages, user
 
 __all__ = [
     "api_v1_router",
 ]
 
-api_v1_router = APIRouterWithRouteProtection()
-api_v1_router.include_router(attachment_router)
-api_v1_router.include_router(auth_router)
-api_v1_router.include_router(health_router)
-api_v1_router.include_router(chat_router)
-api_v1_router.include_router(message_router)
-api_v1_router.include_router(user_router)
+api_v1_router = APIRouter()
+
+api_v1_router.include_router(health.unprotected_router)
+
+api_v1_router.include_router(attachments.protected_router)
+
+api_v1_router.include_router(auth.protected_router)
+api_v1_router.include_router(auth.unprotected_router)
+
+api_v1_router.include_router(user.protected_router)
+
+api_v1_router.include_router(messages.protected_router)
+
+api_v1_router.include_router(chats.protected_router)

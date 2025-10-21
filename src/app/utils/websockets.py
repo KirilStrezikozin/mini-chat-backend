@@ -4,8 +4,8 @@ from collections import defaultdict
 from collections.abc import Callable, Iterable
 
 from fastapi import status
+from fastapi.datastructures import Address
 from fastapi.websockets import WebSocket, WebSocketDisconnect
-from starlette.datastructures import Address
 
 from app.core.exceptions import (
     InstantiationNotAllowedError,
@@ -13,7 +13,7 @@ from app.core.exceptions import (
 )
 from app.core.logger import root_logger
 from app.schemas import (
-    MessageAttachmentAnnouncementSchema,
+    MessageAttachmentsAnnouncementSchema,
     MessageDeleteAnnouncementSchema,
     MessagePutAnnouncementSchema,
     UserIDSchema,
@@ -106,7 +106,7 @@ class WebSocketManager:
         users: Iterable[UserIDSchema],
         model: MessagePutAnnouncementSchema
         | MessageDeleteAnnouncementSchema
-        | MessageAttachmentAnnouncementSchema,
+        | MessageAttachmentsAnnouncementSchema,
     ):
         """
         Sends a JSON representation of the given model to users that are in the

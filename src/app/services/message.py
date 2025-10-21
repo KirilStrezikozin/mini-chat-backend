@@ -1,10 +1,7 @@
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import MessageNotFoundError
 from app.db.repositories import ChatRepository, MessageRepository
 from app.schemas import (
-    AttachmentCreateSchema,
-    AttachmentReadSchema,
     MessageEditSchema,
     MessageIDSchema,
     MessageReadSchema,
@@ -17,70 +14,32 @@ from .base import BaseService
 class MessageService(BaseService):
     async def get(self, *, message_schema: MessageIDSchema) -> MessageReadSchema:
         async with self.uow as uow:
-            resource = await uow.messageRepository.get(message_schema)
-            if not resource:
-                raise MessageNotFoundError
-            return MessageReadSchema.model_validate(resource)
+            message_resource = await self._get_message_resource(uow, message_schema)
+            return MessageReadSchema.model_validate(message_resource)
 
-    async def edit(self, *, message_schema: MessageEditSchema) -> None:
+    async def patch(self, *, message_schema: MessageEditSchema) -> MessageReadSchema:
         async with self.uow as uow:
-            resource = await uow.messageRepository.get(message_schema)
-            if not resource:
-                raise MessageNotFoundError
-
-            await uow.messageRepository.update_one(
-                message_schema, content=message_schema.content
+            # Ensure the requested message exists.
+            _ = await self._get_message_resource(uow, message_schema)
+            message_resource = await uow.messageRepository.update_one(
+                message_schema,
+                MessageRepository.model_cls,
+                content=message_schema.content,
             )
-
-            await uow.commit()
+            return MessageReadSchema.model_validate(message_resource)
 
     async def delete(self, *, message_schema: MessageIDSchema) -> None:
         async with self.uow as uow:
-            resource = await uow.messageRepository.get(message_schema)
-            if not resource:
-                raise MessageNotFoundError
-
+            # Ensure the requested message exists.
+            _ = await self._get_message_resource(uow, message_schema)
             await uow.messageRepository.delete_one(message_schema)
-            await uow.commit()
 
-    async def add_attachment(self, *, schema: AttachmentCreateSchema):
-        async with self.uow as uow:
-            resource = await uow.messageRepository.get(
-                MessageIDSchema(id=schema.message_id),
-                options=[selectinload(MessageRepository.model_cls.attachments)],
-            )
-            if not resource:
-                raise MessageNotFoundError
-
-            attachmentResource = await uow.attachmentRepository.add_one(schema)
-
-            resource.attachments.append(attachmentResource)
-            await uow.commit()
-
-            attachment = AttachmentReadSchema.model_validate(attachmentResource)
-            return attachment
-
-    async def get_attachments(
-        self, *, message_schema: MessageIDSchema
-    ) -> list[AttachmentReadSchema]:
-        async with self.uow as uow:
-            resource = await uow.messageRepository.get(
-                message_schema,
-                options=[selectinload(MessageRepository.model_cls.attachments)],
-            )
-            if not resource:
-                raise MessageNotFoundError
-
-            return [
-                AttachmentReadSchema.model_validate(model)
-                for model in resource.attachments
-            ]
-
-    async def get_users_for_message_in_chat(
+    async def get_users_of_chat(
         self, *, message_schema: MessageIDSchema
     ) -> list[UserReadSchema]:
         async with self.uow as uow:
-            resource = await uow.messageRepository.get(
+            message_resource = await self._get_message_resource(
+                uow,
                 message_schema,
                 options=[
                     selectinload(
@@ -90,9 +49,8 @@ class MessageService(BaseService):
                     ),
                 ],
             )
-            if not resource:
-                raise MessageNotFoundError
 
             return [
-                UserReadSchema.model_validate(model) for model in resource.chat.users
+                UserReadSchema.model_validate(model)
+                for model in message_resource.chat.users
             ]

@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from datetime import datetime
 
 from sqlalchemy import ColumnElement, and_, select
 from sqlalchemy.sql.elements import BinaryExpression
@@ -8,8 +7,8 @@ from app.db.models import MessageModel
 from app.db.repositories import GenericRepository
 from app.interfaces.db.repositories import AbstractMessageRepository
 from app.schemas import (
-    ChatIDSchema,
     MessageCreateSchema,
+    MessageFetchSchema,
     MessageIDSchema,
 )
 
@@ -20,13 +19,15 @@ class MessageRepository(
     model=MessageModel,
 ):
     async def fetch_messages(
-        self,
-        *,
-        chat_id_schema: ChatIDSchema,
-        since: datetime | None = None,
-        until: datetime | None = None,
-        count: int | None = None,
+        self, *, message_fetch_schema: MessageFetchSchema
     ) -> Sequence[MessageModel]:
+        [chat_id, since, until, count] = [
+            message_fetch_schema.chat_id,
+            message_fetch_schema.since,
+            message_fetch_schema.until,
+            message_fetch_schema.count,
+        ]
+
         period_clause: BinaryExpression[bool] | ColumnElement[bool]
         if since and until:
             period_clause = self.model_cls.timestamp.between(since, until)
@@ -38,7 +39,7 @@ class MessageRepository(
 
         stmt = select(self.model_cls).where(
             and_(
-                self.model_cls.chat_id == chat_id_schema.id,
+                self.model_cls.chat_id == chat_id,
                 period_clause,
             )
         )

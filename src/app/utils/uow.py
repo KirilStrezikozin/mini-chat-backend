@@ -1,5 +1,6 @@
 from types import TracebackType
-from typing import Self
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.repositories import (
     AttachmentRepository,
@@ -8,18 +9,25 @@ from app.db.repositories import (
     MessageRepository,
     UserRepository,
 )
-from app.interfaces.utils.uow import AbstractAsyncUnitOfWork
+from app.interfaces.utils.uow import (
+    AbstractAsyncUnitOfWork,
+    AbstractAsyncUnitOfWorkInContext,
+)
+
+
+class AsyncUnitOfWorkInContext(AbstractAsyncUnitOfWorkInContext):
+    def __init__(self, async_session: AsyncSession) -> None:
+        self.userRepository = UserRepository(async_session)
+        self.messageRepository = MessageRepository(async_session)
+        self.chatRepository = ChatRepository(async_session)
+        self.chatUserRepository = ChatUserRepository(async_session)
+        self.attachmentRepository = AttachmentRepository(async_session)
 
 
 class AsyncUnitOfWork(AbstractAsyncUnitOfWork):
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> AsyncUnitOfWorkInContext:
         self._async_session = self._async_session_factory()
-        self.userRepository = UserRepository(self._async_session)
-        self.messageRepository = MessageRepository(self._async_session)
-        self.chatRepository = ChatRepository(self._async_session)
-        self.chatUserRepository = ChatUserRepository(self._async_session)
-        self.attachmentRepository = AttachmentRepository(self._async_session)
-        return self
+        return AsyncUnitOfWorkInContext(self._async_session)
 
     async def __aexit__(
         self,
@@ -30,10 +38,10 @@ class AsyncUnitOfWork(AbstractAsyncUnitOfWork):
         _ = exc_type, tb
         assert self._async_session is not None
 
-        if exc:
-            await self._async_session.rollback()
-        await self._async_session.close()
-
-    async def commit(self) -> None:
-        assert self._async_session is not None
-        await self._async_session.commit()
+        try:
+            if exc:
+                await self._async_session.rollback()
+            else:
+                await self._async_session.commit()
+        finally:
+            await self._async_session.close()

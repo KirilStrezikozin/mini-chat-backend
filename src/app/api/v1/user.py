@@ -1,48 +1,68 @@
 from app.api.deps import (
     ChatServiceDependency,
+    HTTPResponseCookieManagerDependency,
+    UserAuthServiceDependency,
     UserIDDependency,
     UserProfileServiceDependency,
 )
+from app.core.router import ProtectedAPIRouter
 from app.schemas import (
     ChatInfoSchema,
     UserFullNameSchema,
+    UserPasswordSchema,
     UserProfileSchema,
     UserUserNameSchema,
 )
-from app.utils.router import APIRouterWithRouteProtection
 
-user_router = APIRouterWithRouteProtection(prefix="/user", tags=["user"])
+protected_router = ProtectedAPIRouter(prefix="/user", tags=["user"])
 
 
-@user_router.get("", protected=True)
+@protected_router.get("")
 async def user(
     service: UserProfileServiceDependency,
-    idSchema: UserIDDependency,
+    user_schema: UserIDDependency,
 ) -> UserProfileSchema:
-    return await service.get_user(idSchema=idSchema)
+    return await service.get_user_profile(user_schema=user_schema)
 
 
-@user_router.post("/edit/fullname", protected=True)
+@protected_router.patch("/fullname")
 async def edit_fullname(
     service: UserProfileServiceDependency,
-    fullNameSchema: UserFullNameSchema,
-    idSchema: UserIDDependency,
-) -> None:
-    await service.edit_fullname(idSchema=idSchema, new_fullname_schema=fullNameSchema)
+    user_schema: UserIDDependency,
+    fullname_schema: UserFullNameSchema,
+) -> UserProfileSchema:
+    return await service.patch_fullname(
+        user_schema=user_schema, fullname_schema=fullname_schema
+    )
 
 
-@user_router.post("/edit/username", protected=True)
+@protected_router.patch("/username")
 async def edit_username(
     service: UserProfileServiceDependency,
-    userNameSchema: UserUserNameSchema,
-    idSchema: UserIDDependency,
+    user_schema: UserIDDependency,
+    username_schema: UserUserNameSchema,
+) -> UserProfileSchema:
+    return await service.patch_username(
+        user_schema=user_schema, username_schema=username_schema
+    )
+
+
+@protected_router.delete("")
+async def delete_user_account(
+    service: UserAuthServiceDependency,
+    cookie_manager: HTTPResponseCookieManagerDependency,
+    user_schema: UserIDDependency,
+    password_schema: UserPasswordSchema,
 ) -> None:
-    await service.edit_username(idSchema=idSchema, new_username_schema=userNameSchema)
+    await service.delete_user_account(
+        user_schema=user_schema, password_schema=password_schema
+    )
+    cookie_manager.unset_token_cookie()
 
 
-@user_router.get("/chats", protected=True)
-async def get_chat_info(
+@protected_router.get("/chats")
+async def get_chats_info(
     service: ChatServiceDependency,
-    idSchema: UserIDDependency,
+    user_schema: UserIDDependency,
 ) -> list[ChatInfoSchema]:
-    return await service.get_chats_info(userIDSchema=idSchema)
+    return await service.get_chats_info(user_schema=user_schema)

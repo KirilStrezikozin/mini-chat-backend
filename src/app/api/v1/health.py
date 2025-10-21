@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-health_router = APIRouter(tags=["health"])
+unprotected_router = APIRouter(tags=["health"])
 
 
-@health_router.get("/health")
+@unprotected_router.get("/health")
 async def health() -> str:
     return "healthy"

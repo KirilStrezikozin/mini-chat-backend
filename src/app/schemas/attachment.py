@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Literal
 
+from fastapi.datastructures import URL
 from pydantic import HttpUrl
 
 from app.utils.types import IDType
@@ -22,7 +23,7 @@ class AttachmentReadSchema(AttachmentIDSchema, AttachmentCreateSchema):
     timestamp: datetime
 
 
-class PresignedAttachmentReadSchema(Base):
-    url: HttpUrl
-    allowed_method: Literal["put", "get"]
-    attachment: AttachmentReadSchema
+class PresignedAttachmentsReadSchema(Base):
+    allowed_method = "put"
+    urls: Sequence[HttpUrl | URL | str]
+    attachments: Sequence[AttachmentReadSchema]

@@ -1,9 +1,11 @@
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import Depends, Request, Response, WebSocket
 
 from app.core.config import Config, config
 from app.db.session import async_session_factory
+from app.interfaces.utils.s3.client import S3ClientProtocol
+from app.interfaces.utils.uow import AbstractAsyncUnitOfWork
 from app.schemas import TokenPayload, UserIDSchema
 from app.services import (
     AttachmentService,
@@ -28,19 +30,19 @@ def get_config() -> Config:
 ConfigDependency = Annotated[Config, Depends(get_config)]
 
 
-def get_uow(request: Request) -> AsyncUnitOfWork:
+def get_uow(request: Request) -> AbstractAsyncUnitOfWork:
     engine = request.app.state.engine
     return AsyncUnitOfWork(async_session_factory=async_session_factory(engine))
 
 
-UoWDependency = Annotated[AsyncUnitOfWork, Depends(get_uow)]
+UoWDependency = Annotated[AbstractAsyncUnitOfWork, Depends(get_uow)]
 
 
-def get_s3_client(request: Request):
+def get_s3_client(request: Request) -> S3ClientProtocol:
     return request.app.state.s3_client
 
 
-S3ClientDependency = Annotated[Any, Depends(get_s3_client)]
+S3ClientDependency = Annotated[S3ClientProtocol, Depends(get_s3_client)]
 
 
 def get_user_auth_service(
@@ -89,9 +91,9 @@ MessageServiceDependency = Annotated[MessageService, Depends(get_message_service
 
 
 def get_attachment_service(
-    uow: UoWDependency, config: ConfigDependency
+    uow: UoWDependency, config: ConfigDependency, s3: S3ClientDependency
 ) -> AttachmentService:
-    return AttachmentService(config, uow)
+    return AttachmentService(config, uow, s3)
 
 
 AttachmentServiceDependency = Annotated[

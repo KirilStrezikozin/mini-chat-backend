@@ -24,26 +24,26 @@ class HTTPResponseCookieManager:
         self.config = config
         self.response = response
 
-    def set_ws_token_cookie(self, tokenSchema: WebSocketTokenSchema) -> None:
+    def set_ws_token_cookie(self, token_schema: WebSocketTokenSchema) -> None:
         self.response.set_cookie(
             key=TokenType.ws_access_token.value,
-            value=tokenSchema.ws_access_token,
+            value=token_schema.ws_access_token,
             httponly=True,
             secure=self.config.USE_SECURE_COOKIES,
             max_age=self.config.token.WS_EXPIRES_SECONDS,
         )
 
-    def set_token_cookie(self, tokenSchema: TokenSchema) -> None:
+    def set_token_cookie(self, token_schema: TokenSchema) -> None:
         self.response.set_cookie(
             key=TokenType.access_token.value,
-            value=tokenSchema.access_token,
+            value=token_schema.access_token,
             httponly=True,
             secure=self.config.USE_SECURE_COOKIES,
             max_age=self.config.token.ACCESS_EXPIRES_SECONDS,
         )
         self.response.set_cookie(
             key=TokenType.refresh_token.value,
-            value=tokenSchema.refresh_token,
+            value=token_schema.refresh_token,
             httponly=True,
             secure=self.config.USE_SECURE_COOKIES,
             max_age=self.config.token.REFRESH_EXPIRES_SECONDS,

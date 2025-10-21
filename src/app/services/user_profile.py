@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 
-from app.core.exceptions import UserNameAlreadyRegistered, UserNotFoundError
+from app.core.exceptions import UserNameAlreadyRegistered
+from app.db.models import UserModel
 from app.schemas import (
     UserFullNameSchema,
     UserIDSchema,
@@ -13,45 +14,33 @@ from .base import BaseService
 
 
 class UserProfileService(BaseService):
-    async def get_user(self, *, idSchema: UserIDSchema) -> UserProfileSchema:
+    async def get_user_profile(self, *, user_schema: UserIDSchema) -> UserProfileSchema:
         async with self.uow as uow:
-            resource = await uow.userRepository.get(idSchema)
-            if not resource:
-                raise UserNotFoundError
-            user = UserReadSchema.model_validate(resource)
-            return UserProfileSchema(
-                username=user.username,
-                fullname=user.fullname,
-                email=user.email,
+            user_resource = await self._get_user_resource(uow, user_schema)
+            user = UserReadSchema.model_validate(user_resource)
+            return UserProfileSchema(**user.model_dump())
+
+    async def _patch(
+        self, user_schema: UserIDSchema, **patch_kwargs
+    ) -> UserProfileSchema:
+        async with self.uow as uow:
+            # Ensure the requested user exists.
+            _ = await self._get_user_resource(uow, user_schema)
+            user_resource = await uow.userRepository.update_one(
+                user_schema, UserModel, **patch_kwargs
             )
+            user = UserReadSchema.model_validate(user_resource)
+            return UserProfileSchema(**user.model_dump())
 
-    async def edit_username(
-        self, *, idSchema: UserIDSchema, new_username_schema: UserUserNameSchema
-    ) -> None:
-        async with self.uow as uow:
-            user = await uow.userRepository.get(idSchema)
-            if not user:
-                raise UserNotFoundError
+    async def patch_username(
+        self, *, user_schema: UserIDSchema, username_schema: UserUserNameSchema
+    ) -> UserProfileSchema:
+        try:
+            return await self._patch(user_schema, username=username_schema.username)
+        except IntegrityError as error:
+            raise UserNameAlreadyRegistered from error
 
-            try:
-                await uow.userRepository.update_one(
-                    idSchema, username=new_username_schema.username
-                )
-            except IntegrityError as error:
-                raise UserNameAlreadyRegistered from error
-
-            await uow.commit()
-
-    async def edit_fullname(
-        self, *, idSchema: UserIDSchema, new_fullname_schema: UserFullNameSchema
-    ) -> None:
-        async with self.uow as uow:
-            user = await uow.userRepository.get(idSchema)
-            if not user:
-                raise UserNotFoundError
-
-            await uow.userRepository.update_one(
-                idSchema, fullname=new_fullname_schema.fullname
-            )
-
-            await uow.commit()
+    async def patch_fullname(
+        self, *, user_schema: UserIDSchema, fullname_schema: UserFullNameSchema
+    ) -> UserProfileSchema:
+        return await self._patch(user_schema, fullname=fullname_schema.fullname)

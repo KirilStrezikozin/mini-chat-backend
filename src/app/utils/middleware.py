@@ -1,4 +1,7 @@
+from typing import override
+
 from fastapi import Request, Response, status
+from fastapi.routing import APIRoute
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.types import ASGIApp
 
@@ -9,20 +12,21 @@ from app.utils.security import HTTPResponseCookieManager, JWTManager
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):
-    def __init__(
-        self,
-        app: ASGIApp,
-        config: Config,
-        include_paths: set[str] | None = None,
-    ) -> None:
+    @override
+    def __init__(self, app: ASGIApp, config: Config) -> None:
         super().__init__(app)
         self.config = config
-        self.include_paths = include_paths or set()
 
+    @override
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        if request.url.path not in self.include_paths:
+        protected = False
+        route = request.scope["route"]
+        if isinstance(route, APIRoute):
+            protected = getattr(route, "protected", False)
+
+        if not protected:
             return await call_next(request)
 
         access_token = request.cookies.get(TokenType.access_token.value)

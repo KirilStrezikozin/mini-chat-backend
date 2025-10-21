@@ -1,7 +1,6 @@
 from sqlalchemy import Row
 
 from app.db.models.mappings import PrimaryKeyID
-from app.db.repositories import UserRepository
 from app.schemas import ChatSearchByType, ChatSearchResultSchema, UserIDSchema
 
 from .base import BaseService
@@ -17,19 +16,9 @@ class ChatDiscoveryService(BaseService):
         count: int | None = None,
     ) -> list[ChatSearchResultSchema]:
         async with self.uow as uow:
-            model = UserRepository.model_cls
-            filter_by = model.fullname if by.value == "fullname" else model.username
+            resource = await uow.userRepository.search_by(contains, by, skip_id, count)
 
-            resource = await uow.userRepository.get_column_scalars(
-                model.id,
-                (model.fullname, model.username),
-                filter_by,
-                skip_id,
-                contains.lower(),
-                count,
-            )
-
-            def transform(row: Row[tuple[PrimaryKeyID, str, str]]):
+            def make_search_result(row: Row[tuple[PrimaryKeyID, str, str]]):
                 resource = row.tuple()
                 return ChatSearchResultSchema(
                     id=resource[0],
@@ -37,4 +26,4 @@ class ChatDiscoveryService(BaseService):
                     username=resource[2],
                 )
 
-            return [transform(v) for v in resource]
+            return [make_search_result(v) for v in resource]

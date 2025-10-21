@@ -4,7 +4,7 @@ __all__ = [
     "AttachmentCreateSchema",
     "AttachmentIDSchema",
     "AttachmentReadSchema",
-    "PresignedAttachmentReadSchema",
+    "PresignedAttachmentsReadSchema",
     "ChatIDSchema",
     "ChatInfoSchema",
     "ChatRetrieveSchema",
@@ -12,8 +12,7 @@ __all__ = [
     "ChatSearchByType",
     "ChatSearchResultSchema",
     "ChatUserSchema",
-    "MessageAttachmentAnnouncementSchema",
-    "MessageChangeContentSchema",
+    "MessageAttachmentsAnnouncementSchema",
     "MessageContentSchema",
     "MessageCreateSchema",
     "MessageDeleteAnnouncementSchema",
@@ -50,7 +49,7 @@ from .attachment import (
     AttachmentCreateSchema,
     AttachmentIDSchema,
     AttachmentReadSchema,
-    PresignedAttachmentReadSchema,
+    PresignedAttachmentsReadSchema,
 )
 from .base import Base, IDSchema
 from .chat import (
@@ -63,8 +62,7 @@ from .chat import (
     ChatUserSchema,
 )
 from .message import (
-    MessageAttachmentAnnouncementSchema,
-    MessageChangeContentSchema,
+    MessageAttachmentsAnnouncementSchema,
     MessageContentSchema,
     MessageCreateSchema,
     MessageDeleteAnnouncementSchema,
