@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
 from pydantic import StringConstraints, model_validator
 
@@ -44,17 +44,17 @@ class MessageEditSchema(MessageIDSchema, MessageContentSchema):
 
 
 class MessagePutAnnouncementSchema(Base):
-    announcement_type: Literal["message/put"] = "message/put"
+    announcement_type = "message/put"
     message: MessageReadSchema
 
 
 class MessageDeleteAnnouncementSchema(Base):
-    announcement_type: Literal["message/delete"] = "message/delete"
+    announcement_type = "message/delete"
     message: MessageReadSchema
 
 
 class MessageAttachmentsAnnouncementSchema(Base):
-    announcement_type: Literal["message/attachments"] = "message/attachments"
+    announcement_type = "message/attachments"
     attachments: Sequence[AttachmentReadSchema]
 
 

@@ -33,8 +33,8 @@ class JWTManager:
             raise TokenValidationError from error
 
     @staticmethod
-    def set_request_token_payload(request: Request, tokenPayload: TokenPayload):
-        request.scope["tokenPayload"] = tokenPayload
+    def set_request_token_payload(request: Request, token_payload: TokenPayload):
+        request.scope["tokenPayload"] = token_payload
 
     @staticmethod
     def get_request_token_payload(request: Request) -> TokenPayload:
@@ -90,24 +90,24 @@ class JWTManager:
         )
 
     @staticmethod
-    def create_token_schema(config: Config, idSchema: UserIDSchema) -> TokenSchema:
+    def create_token_schema(config: Config, user_schema: UserIDSchema) -> TokenSchema:
         access_token = JWTManager.create_access_token(
             config,
-            sub={"id": str(idSchema.id), "type": TokenType.access_token.value},
+            sub={"id": str(user_schema.id), "type": TokenType.access_token.value},
         )
         refresh_token = JWTManager.create_refresh_token(
             config,
-            sub={"id": str(idSchema.id), "type": TokenType.refresh_token.value},
+            sub={"id": str(user_schema.id), "type": TokenType.refresh_token.value},
         )
 
         return TokenSchema(access_token=access_token, refresh_token=refresh_token)
 
     @staticmethod
     def create_ws_token_schema(
-        config: Config, idSchema: UserIDSchema
+        config: Config, user_schema: UserIDSchema
     ) -> WebSocketTokenSchema:
         ws_access_token = JWTManager.create_ws_access_token(
             config,
-            sub={"id": str(idSchema.id), "type": TokenType.ws_access_token.value},
+            sub={"id": str(user_schema.id), "type": TokenType.ws_access_token.value},
         )
         return WebSocketTokenSchema(ws_access_token=ws_access_token)

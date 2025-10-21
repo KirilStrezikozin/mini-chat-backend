@@ -57,9 +57,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
         if refresh:
             assert refresh_token_payload
-            idSchema = UserIDSchema(id=refresh_token_payload.id)
-            refresh_schema = JWTManager.create_token_schema(self.config, idSchema)
-            token_payload = TokenPayload(id=idSchema.id, type=TokenType.access_token)
+            user_schema = UserIDSchema(id=refresh_token_payload.id)
+            refresh_schema = JWTManager.create_token_schema(self.config, user_schema)
+            token_payload = TokenPayload(id=user_schema.id, type=TokenType.access_token)
 
         if not token_payload:
             return Response("Unauthorized", status_code=status.HTTP_401_UNAUTHORIZED)

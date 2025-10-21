@@ -62,6 +62,7 @@ async def websocket_endpoint(
     await WebSocketManager.handle_client(
         user=UserIDSchema(id=token_payload.id), websocket=ws
     )
+    cookie_manager.unset_token_cookie()
 
 
 @protected_router.get("/ws/token")

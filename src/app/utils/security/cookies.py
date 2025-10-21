@@ -18,6 +18,9 @@ class WebSocketCookieManager:
             raise TokenValidationError
         return JWTManager.validate_token(self.config, token, TokenType.ws_access_token)
 
+    def unset_token_cookie(self) -> None:
+        self.ws.cookies.pop(TokenType.ws_access_token.value)
+
 
 class HTTPResponseCookieManager:
     def __init__(self, config: Config, response: Response) -> None:
